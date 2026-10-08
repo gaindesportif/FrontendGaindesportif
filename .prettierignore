@@ -6,3 +6,4 @@ playwright-report
 package-lock.json
 .env*
 public/fonts
+next-env.d.ts
