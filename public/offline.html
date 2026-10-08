@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#123c2d" />
+    <title>Hors connexion · Gaindé Sportif</title>
+    <style>
+      body {
+        margin: 0;
+        background: #f5f3ed;
+        color: #123c2d;
+        font:
+          16px system-ui,
+          sans-serif;
+        display: grid;
+        min-height: 100svh;
+        place-items: center;
+      }
+      main {
+        max-width: 500px;
+        padding: 40px 24px;
+      }
+      img {
+        width: 80px;
+        border-radius: 50%;
+      }
+      h1 {
+        font-size: clamp(40px, 10vw, 64px);
+        line-height: 1.05;
+        letter-spacing: -0.055em;
+      }
+      p {
+        line-height: 1.7;
+        color: #506158;
+      }
+      button,
+      a {
+        display: inline-flex;
+        min-height: 48px;
+        align-items: center;
+        padding: 0 22px;
+        background: #123c2d;
+        color: white;
+        text-decoration: none;
+        border: 0;
+        font: inherit;
+        cursor: pointer;
+      }
+      small {
+        display: block;
+        margin-top: 24px;
+      }
+      a {
+        background: transparent;
+        color: #123c2d;
+        text-decoration: underline;
+      }
+      button:focus-visible,
+      a:focus-visible {
+        outline: 3px solid #c99b10;
+        outline-offset: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="Gaindé Sportif" />
+      <h1>Le réseau fait<br />une pause.</h1>
+      <p>
+        Vous êtes hors connexion. Reconnectez-vous pour explorer les collections ou envoyer votre
+        message. Aucun formulaire n’est envoyé ou conservé ici.
+      </p>
+      <button onclick="location.reload()">Réessayer</button><a href="/">Retour à l’accueil</a
+      ><small>Dakar dans le cœur. Le Sénégal dans l’âme.</small>
+    </main>
+  </body>
+</html>
