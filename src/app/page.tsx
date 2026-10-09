@@ -1,78 +1,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, ArrowUpRight, MoveDown, Sparkles } from 'lucide-react';
+import { ArrowUpRight, Sparkles } from 'lucide-react';
 import { Featured } from '@/components/featured';
+import { HomeHero } from '@/components/home/home-hero';
+import { HomeUniverses } from '@/components/home/home-universes';
+import styles from '@/components/home/home.module.css';
 export default function Home() {
   return (
-    <>
-      <section className="hero" aria-labelledby="hero-heading">
-        <div className="hero-copy">
-          <span className="eyebrow hero-eyebrow">
-            <span className="status-dot" /> De Dakar. Avec caractère.
-          </span>
-          <h1 id="hero-heading">
-            LA FIERTÉ
-            <br />
-            SE PORTE<span className="hero-period">.</span>
-          </h1>
-          <p>
-            Sur le terrain. Dans la rue. Au quotidien.
-            <br />
-            Bien plus qu’un style, une façon de dire
-            <br className="desktop-break" /> d’où l’on vient.
-          </p>
-          <div className="hero-actions">
-            <Link className="button button-dark" href="/collections">
-              Trouver mon Gaindé <ArrowUpRight size={20} />
-            </Link>
-            <Link href="/a-propos" className="hero-story-link">
-              Notre histoire <ArrowRight size={17} />
-            </Link>
-          </div>
-          <div className="hero-bottom">
-            <span className="hero-coordinate">
-              DAKAR, SÉNÉGAL
-              <br />
-              <strong>14°43′ N · 17°28′ W</strong>
-            </span>
-            <a
-              href="#collections"
-              className="scroll-link"
-              aria-label="Découvrir les collections plus bas"
-            >
-              <MoveDown size={18} /> Explorer
-            </a>
-          </div>
-        </div>
-        <div className="hero-photo">
-          <Image
-            src="/images/hero-dakar.webp"
-            alt="Deux personnes portant les t-shirts Dakar, noir et blanc, dans les rues du Grand Dakar"
-            width={720}
-            height={1080}
-            priority
-            sizes="(max-width: 760px) 100vw, 50vw"
-          />
-          <div className="hero-photo-top">
-            <span>LES RUES ONT DU STYLE.</span>
-            <span>01 — DAKAR</span>
-          </div>
-          <Link className="hero-photo-label" href="/collections?category=dakar">
-            <span>
-              <small>L’énergie de la ville.</small>
-              <strong>La collection Dakar</strong>
-            </span>
-            <span className="round-arrow">
-              <ArrowUpRight size={24} />
-            </span>
-          </Link>
-          <div className="hero-tricolor" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </div>
-        </div>
-      </section>
+    <div className={styles.home}>
+      <HomeHero />
       <div className="identity-strip">
         <span>UNE FIERTÉ COMMUNE</span>
         <span className="strip-star">✳</span>
@@ -82,6 +18,7 @@ export default function Home() {
         <span className="strip-star">✳</span>
         <span>DAKAR DANS LE CŒUR</span>
       </div>
+      <HomeUniverses />
       <Featured />
       <section className="story-section" aria-labelledby="story-heading">
         <div className="story-photo">
@@ -95,7 +32,7 @@ export default function Home() {
           <span className="photo-caption">DAKAR / L’ALLURE D’ICI.</span>
         </div>
         <div className="story-copy">
-          <span className="eyebrow">02 / L’esprit Gaindé</span>
+          <span className="eyebrow">03 / L’esprit Gaindé</span>
           <span className="story-symbol" aria-hidden="true">
             ✳
           </span>
@@ -131,7 +68,7 @@ export default function Home() {
           </span>
         </div>
         <div className="team-copy">
-          <span className="eyebrow">03 / Ensemble, plus loin</span>
+          <span className="eyebrow">04 / Ensemble, plus loin</span>
           <h2 id="team-heading">
             Le même esprit.
             <br />
@@ -146,17 +83,20 @@ export default function Home() {
           </Link>
         </div>
         <div className="team-detail">
-          <span className="team-number">
-            11<span>+</span>
-          </span>
-          <span>
-            INDIVIDUALITÉS.
+          <div className={styles.teamPitch} aria-hidden="true">
+            <span />
+            <span />
+            <i />
+            <i />
+            <i />
+          </div>
+          <span className={styles.teamMotto}>
+            LE COLLECTIF.
             <br />
-            UNE MÊME ÉQUIPE.
+            LA FORCE D’AVANCER ENSEMBLE.
           </span>
-          <div className="team-lines" aria-hidden="true" />
         </div>
       </section>
-    </>
+    </div>
   );
 }

@@ -15,7 +15,7 @@ export function Featured() {
     >
       <div className="section-heading">
         <div>
-          <span className="eyebrow">01 / Les collections</span>
+          <span className="eyebrow">02 / La sélection Gaindé</span>
           <h2 id="featured-heading">À chacun son Gaindé.</h2>
         </div>
         <Link className="text-link desktop-discover" href="/collections">
