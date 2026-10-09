@@ -1,6 +1,5 @@
 @layer components {
   .hero {
-    --text-lift: -6px;
     position: relative;
     background: #071a14;
     color: #faf6e9;
@@ -58,30 +57,45 @@
   }
   .titleLine,
   .titleAccent {
+    --title-ink: #faf6e9;
+    --title-glint: #ffffff;
     display: block;
-    transform-origin: 50% 100%;
+    white-space: nowrap;
+    overflow: clip;
+    /* Réserver la hauteur et protéger l'accent du É pendant le glissement. */
+    padding-block: 0.14em;
+    margin-block: -0.14em;
   }
   .titleAccent {
+    --title-ink: #efca50;
+    --title-glint: #fff4b5;
     color: #efca50;
   }
-  /* Le texte reste lisible pendant l'entrée ; aucun masquage initial sans JS. */
+  .titlePanel {
+    display: block;
+  }
+  .copySentence {
+    display: block;
+  }
+  /* Entrée après hydratation uniquement : titre complet sans JS / mouvement réduit. */
   .hero[data-enhanced='true'] .kicker {
     animation: copyReveal 700ms ease-out both;
   }
-  .hero[data-enhanced='true'] .titleLine {
-    animation:
-      titleReveal 1000ms cubic-bezier(0.2, 0.7, 0.2, 1) 80ms both,
-      titleFloat 6s ease-in-out 1200ms infinite;
-  }
-  .hero[data-enhanced='true'] .titleAccent {
-    background: linear-gradient(110deg, #efca50 30%, #fff3b0 46%, #efca50 62%);
-    background-size: 260% 100%;
+  .hero[data-enhanced='true'] .titlePanel {
+    /* Entrée unique ; le reflet traverse ensuite les lettres sans les déplacer. */
+    background: linear-gradient(
+      110deg,
+      var(--title-ink) 42%,
+      var(--title-glint) 50%,
+      var(--title-ink) 58%
+    );
+    background-size: 250% 100%;
+    background-position: 130% 50%;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     animation:
-      titleReveal 1100ms cubic-bezier(0.2, 0.7, 0.2, 1) 160ms both,
-      goldSheen 4.8s ease-in-out 1200ms infinite,
-      titleFloat 6s ease-in-out 1600ms infinite;
+      titlePanelEnter 1050ms cubic-bezier(0.16, 1, 0.3, 1) var(--line-delay) both,
+      titleSheen 6s ease-in-out calc(1400ms + var(--line-delay)) infinite;
   }
   .hero[data-enhanced='true'] .copyRule {
     animation: copyReveal 750ms ease-out 260ms both;
@@ -89,8 +103,11 @@
   .hero[data-enhanced='true'] .copyRule > span {
     animation: brandTurn 12s linear infinite;
   }
-  .hero[data-enhanced='true'] .copy > p {
-    animation: copyReveal 750ms ease-out 360ms both;
+  .hero[data-enhanced='true'] .copySentence {
+    animation: copyReveal 900ms ease-out 360ms both;
+  }
+  .hero[data-enhanced='true'] .copySentence:nth-child(2) {
+    animation-delay: 520ms;
   }
   .hero[data-enhanced='true'] .actions {
     animation: copyReveal 750ms ease-out 460ms both;
@@ -109,33 +126,20 @@
       transform: translateY(0);
     }
   }
-  @keyframes titleReveal {
+  @keyframes titlePanelEnter {
     from {
-      transform: perspective(900px) translateY(18px) rotateX(12deg);
+      transform: translate3d(105%, 0, 0);
     }
     to {
-      transform: perspective(900px) translateY(0) rotateX(0);
+      transform: translate3d(0, 0, 0);
     }
   }
-  /* Une respiration en profondeur ; les mots ne disparaissent jamais. */
-  @keyframes titleFloat {
+  @keyframes titleSheen {
     0%,
-    100% {
-      transform: perspective(900px) translateY(0) rotateX(0deg);
-    }
-    45% {
-      transform: perspective(900px) translateY(var(--text-lift)) rotateX(3deg);
-    }
-    70% {
-      transform: perspective(900px) translateY(-2px) rotateX(-1deg);
-    }
-  }
-  @keyframes goldSheen {
-    0%,
-    15% {
+    10% {
       background-position: 130% 50%;
     }
-    65%,
+    45%,
     100% {
       background-position: -130% 50%;
     }
@@ -746,9 +750,6 @@
     }
   }
   @media (max-width: 760px) {
-    .hero {
-      --text-lift: -3px;
-    }
     .heroInner {
       grid-template-columns: minmax(0, 1fr);
       padding: 33px 22px 28px;
@@ -918,6 +919,10 @@
     }
   }
   @media (prefers-reduced-motion: reduce) {
+    .hero[data-enhanced='true'] .titlePanel {
+      background: none;
+      -webkit-text-fill-color: currentColor;
+    }
     .home *,
     .home *::before,
     .home *::after {

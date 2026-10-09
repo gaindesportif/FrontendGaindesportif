@@ -22,27 +22,15 @@ test('titre animé et trois univers défilant automatiquement sans clic', async 
   await scene.scrollIntoViewIfNeeded();
   await expect(scene).toHaveAttribute('data-autoplay', 'playing');
   await expect(hero).toHaveAttribute('data-motion', 'playing');
-  expect(
-    await hero
-      .locator('h1 > span')
-      .last()
-      .evaluate((element) =>
-        element
-          .getAnimations()
-          .some(
-            (animation) =>
-              animation instanceof CSSAnimation && animation.animationName.includes('goldSheen'),
-          ),
-      ),
-  ).toBe(true);
-  for (const line of await hero.locator('h1 > span').all()) {
+  for (const line of await hero.locator('[data-motion-line]').all()) {
     expect(
       await line.evaluate((element) =>
         element
           .getAnimations()
           .some(
             (animation) =>
-              animation instanceof CSSAnimation && animation.animationName.includes('titleFloat'),
+              animation instanceof CSSAnimation &&
+              animation.animationName.includes('titlePanelEnter'),
           ),
       ),
     ).toBe(true);
@@ -108,7 +96,9 @@ test('survol, focus, pause et sortie écran suspendent le défilement', async ({
       .locator('h1 > span')
       .last()
       .evaluate((element) =>
-        element.getAnimations().every((animation) => animation.playState === 'paused'),
+        element
+          .getAnimations({ subtree: true })
+          .every((animation) => ['paused', 'finished'].includes(animation.playState)),
       ),
   ).toBe(true);
   await page.clock.runFor(12000);

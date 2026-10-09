@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowDown, ArrowUpRight, MoveRight, Star } from 'lucide-react';
 import { HeroScene } from './hero-scene';
 import { HeroMotion } from './hero-motion';
+import { KineticTitle } from './kinetic-title';
 import styles from './home.module.css';
 
 export function HomeHero() {
@@ -17,16 +18,17 @@ export function HomeHero() {
             </span>{' '}
             DE DAKAR. AVEC CARACTÈRE.
           </span>
-          <h1 id="hero-heading">
-            <span className={styles.titleLine}>LA FIERTÉ</span>
-            <span className={styles.titleAccent}>SE PORTE.</span>
-          </h1>
+          <KineticTitle />
           <div className={styles.copyRule}>
             <span aria-hidden="true">✳</span> DU TERRAIN AUX RUES DE DAKAR.
           </div>
           <p>
-            L’énergie du Sénégal. L’allure qui vous ressemble.
-            <br className={styles.desktopBreak} /> Des pièces pour porter votre identité, partout.
+            <span className={styles.copySentence}>
+              L’énergie du Sénégal. L’allure qui vous ressemble.
+            </span>{' '}
+            <span className={styles.copySentence}>
+              Des pièces pour porter votre identité, partout.
+            </span>
           </p>
           <div className={styles.actions}>
             <Link href="/collections" className={styles.primaryButton}>
