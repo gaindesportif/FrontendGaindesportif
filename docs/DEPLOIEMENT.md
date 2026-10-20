@@ -2,6 +2,10 @@
 
 ## Livraison demandée le 20/10/2026 — Dokploy
 
+### Adresse www
+
+La route HTTPS `www.gaindesportif.com` a été ajoutée par l’utilisateur dans la même application Frontend, port 3000, certificat Let’s Encrypt ; réponse HTTPS 200 vérifiée avant ajout de la redirection. `next.config.ts` définit désormais une redirection permanente 308 du seul hôte www vers `https://gaindesportif.com`, avec conservation du chemin et des paramètres. Elle prend effet après publication et redéploiement du frontend. Ne pas ajouter www aux origines administrateur pour contourner cette étape : les visiteurs et la connexion doivent aboutir sur l’origine canonique sans www. Les domaines racine, localhost et l’alias Vercel ne sont pas concernés par cette règle.
+
 L’utilisateur autorise le déploiement et a choisi un guidage écran par écran. L’application **Frontend** (`gaindesportif-frontend-bagzkj`) existe dans Gaindesportif / production, à côté de Backend (`gaindesportif-backend-goa1gt`). Les projets Sonatel restent hors périmètre. L’agent ne dispose pas de session authentifiée Dokploy.
 
 État observé le 20/10 : l’utilisateur a changé le A `@` de `2.57.91.91` vers `187.127.233.188`, TTL 300, et conservé le CNAME `www` vers le domaine racine. Résolution racine/www vérifiée vers le VPS. HTTPS/Let’s Encrypt activé sur la route racine, port 3000 ; certificat racine vérifié avec validation TLS système (expiration 18/01/2027). GET HTTPS retourne encore 502 avant lancement du frontend. Le CNAME ne crée pas la route Dokploy ni le certificat www : ces derniers restent à configurer et tester.

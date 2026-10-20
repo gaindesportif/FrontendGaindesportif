@@ -7,7 +7,15 @@ const nextConfig: NextConfig = {
   // Médias produits : livraison directe Cloudinary via Image unoptimized.
   // Ne pas autoriser leur copie dans le cache disque de l'optimiseur Next.
   async redirects() {
-    return [{ source: '/admin', destination: '/administration', permanent: false }];
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www\\.gaindesportif\\.com' }],
+        destination: 'https://gaindesportif.com/:path*',
+        permanent: true,
+      },
+      { source: '/admin', destination: '/administration', permanent: false },
+    ];
   },
   async headers() {
     return [
