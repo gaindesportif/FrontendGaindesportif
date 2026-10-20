@@ -4,6 +4,11 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
   reactStrictMode: true,
+  // Médias produits : livraison directe Cloudinary via Image unoptimized.
+  // Ne pas autoriser leur copie dans le cache disque de l'optimiseur Next.
+  async redirects() {
+    return [{ source: '/admin', destination: '/administration', permanent: false }];
+  },
   async headers() {
     return [
       {
@@ -13,6 +18,13 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+      {
+        source: '/administration/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store, max-age=0' },
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
         ],
       },
       {

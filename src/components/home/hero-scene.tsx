@@ -15,6 +15,7 @@ import { heroUniverses } from '@/lib/hero-universes';
 import type { GlassSceneHandle } from '@/lib/glass-scene-engine';
 import { GlassScene } from './glass-scene';
 import { HeroEmblem } from './hero-emblem';
+import { HeroPillars, PillarPresentation } from './hero-pillars';
 import { useHeroMotion } from './hero-motion';
 import styles from './home.module.css';
 
@@ -125,7 +126,7 @@ export function HeroScene() {
     >
       <div className={styles.sceneTop}>
         <span>
-          <span className={styles.liveDot} /> L’ALLURE D’ICI.
+          <span className={styles.liveDot} /> CINQ PILIERS. UNE MÊME ÉNERGIE.
         </span>
         <button
           type="button"
@@ -185,39 +186,39 @@ export function HeroScene() {
           api={glassApi}
           onStatus={onGlassStatus}
         />
-        <span className={styles.glassLabel} aria-hidden="true">
-          LE LION. L’ÉTOILE. LA FIERTÉ.
-        </span>
-        <Link
-          className={styles.lookCard}
-          href={`/collections?category=${universe.id}`}
-          aria-label={`Voir les pièces ${universe.label}`}
-        >
-          <span className={styles.lookPhoto} key={universe.id}>
-            <Image src={universe.image} alt={universe.alt} fill sizes="130px" />
-          </span>
-          <span>
-            {universe.label} <ArrowUpRight size={12} />
-          </span>
-        </Link>
         <HeroEmblem />
+        <HeroPillars />
       </div>
 
       <div className={styles.sceneBottom}>
-        <div
-          className={styles.sceneCaption}
-          aria-live={autoplay ? 'off' : 'polite'}
-          aria-atomic="true"
-        >
-          <span>
-            0{selected + 1} / {universe.label}
-          </span>
+        <div className={styles.collectionHighlight}>
           <Link
-            href={`/collections?category=${universe.id}`}
-            aria-label={`Découvrir la collection ${universe.label}`}
+            className={styles.lookCard}
+            href={`/boutique?category=${universe.id}`}
+            aria-label={`Voir les pièces ${universe.label}`}
           >
-            {universe.title} <ArrowUpRight size={20} />
+            <span className={styles.lookPhoto} key={universe.id}>
+              <Image src={universe.image} alt={universe.alt} fill sizes="130px" />
+            </span>
+            <span>
+              {universe.label} <ArrowUpRight size={12} />
+            </span>
           </Link>
+          <div
+            className={styles.sceneCaption}
+            aria-live={autoplay ? 'off' : 'polite'}
+            aria-atomic="true"
+          >
+            <span>
+              0{selected + 1} / {universe.label}
+            </span>
+            <Link
+              href={`/boutique?category=${universe.id}`}
+              aria-label={`Découvrir la collection ${universe.label}`}
+            >
+              {universe.title} <ArrowUpRight size={20} />
+            </Link>
+          </div>
         </div>
         <div
           className={styles.universeButtons}
@@ -249,6 +250,7 @@ export function HeroScene() {
                 ? 'Défilement en pause'
                 : 'Défilement suspendu pendant l’interaction'}
         </p>
+        <PillarPresentation />
       </div>
     </div>
   );

@@ -20,13 +20,16 @@ export function Footer() {
         <div className="footer-navigation">
           <div>
             <h3>Explorer</h3>
-            <Link href="/collections?category=senegal">
+            <Link href="/boutique">
+              La boutique <ArrowUpRight size={13} />
+            </Link>
+            <Link href="/boutique?category=senegal">
               Sénégal <ArrowUpRight size={13} />
             </Link>
-            <Link href="/collections?category=dakar">
+            <Link href="/boutique?category=dakar">
               Dakar <ArrowUpRight size={13} />
             </Link>
-            <Link href="/collections?category=accessoires">
+            <Link href="/boutique?category=accessoires">
               Accessoires <ArrowUpRight size={13} />
             </Link>
             <Link href="/a-propos">
@@ -47,7 +50,10 @@ export function Footer() {
         </div>
       </div>
       <div className="footer-wordmark" aria-hidden="true">
-        GAINDÉ<span>✳</span>
+        <div className="footer-brand-name">
+          GAINDÉ<span className="footer-brand-symbol">✳</span>
+        </div>
+        <span className="footer-brand-sportif">SPORTIF</span>
       </div>
       <div className="footer-bottom">
         <span>© {new Date().getFullYear()} Gaindé Sportif</span>
@@ -55,6 +61,7 @@ export function Footer() {
           Dakar dans le cœur. Le Sénégal dans l’âme. <ArrowRight size={14} />
         </span>
         <Link href="/confidentialite">Confidentialité</Link>
+        <Link href="/administration">Espace de gestion</Link>
       </div>
     </footer>
   );

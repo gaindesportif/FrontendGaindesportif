@@ -1,26 +1,27 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-test('accueil, filtres, aperçu, sélection et navigation mobile', async ({ page, isMobile }) => {
+test('accueil, boutique unique, anciennes collections et navigation mobile', async ({
+  page,
+  isMobile,
+}) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
+  await page.route('**/api/catalogue?*', (route) =>
+    route.fulfill({ json: { items: [], total: 0, page: 1, pageSize: 24 } }),
+  );
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('LA FIERTÉ');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('button', { name: 'Sénégal 2', exact: true }).click();
-  await expect(page.locator('.product-card')).toHaveCount(2);
-  await page.getByRole('button', { name: 'Découvrir Le Sénégal, sur le cœur.' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Un regard de plus' });
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: 'Voir le second visuel' }).click();
-  await dialog.getByRole('button', { name: 'Garder dans ma sélection' }).click();
-  await page.keyboard.press('Escape');
-  await expect(dialog).not.toBeVisible();
-  await page.getByRole('button', { name: 'Ma sélection, 1 pièces' }).click();
-  await expect(page.getByRole('heading', { name: 'Vos coups de cœur.' })).toBeVisible();
-  await page.keyboard.press('Escape');
-  await page.reload();
-  await expect(page.getByRole('button', { name: 'Ma sélection, 1 pièces' })).toBeVisible();
+  await page.goto('/collections?category=senegal');
+  await expect(page).toHaveURL(/\/boutique\?category=senegal$/);
+  await expect(
+    page.getByRole('heading', { name: 'Aucun produit pour cette recherche.' }),
+  ).toBeVisible();
+  await expect(page.getByTestId('catalogue-card')).toHaveCount(0);
+  await expect(page.locator('.product-card')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Rechercher', exact: true })).toHaveCount(1);
+  await expect(page.getByRole('searchbox')).toHaveCount(0);
   if (isMobile) {
     await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
     await page
@@ -33,19 +34,28 @@ test('accueil, filtres, aperçu, sélection et navigation mobile', async ({ page
 });
 
 test('recherche et états vides', async ({ page }) => {
+  await page.route('**/api/catalogue?*', (route) =>
+    route.fulfill({ json: { items: [], total: 0, page: 1, pageSize: 24 } }),
+  );
   await page.goto('/');
   await page.getByRole('button', { name: 'Rechercher', exact: true }).click();
-  await page.getByRole('textbox', { name: 'Rechercher une collection' }).fill('sénégal');
-  await expect(page.locator('.search-result')).toHaveCount(2);
-  await page.getByRole('textbox', { name: 'Rechercher une collection' }).fill('zzzz');
-  await expect(page.getByText('Aucun résultat pour')).toBeVisible();
-  await page.keyboard.press('Escape');
-  await page.goto('/collections?category=dakar');
-  await expect(page.locator('.product-card')).toHaveCount(2);
-  await page.getByRole('textbox', { name: 'Rechercher dans les collections' }).fill('zzzz');
+  const search = page.getByRole('dialog', { name: 'Rechercher un produit', exact: true });
   await expect(
-    page.getByRole('heading', { name: 'On n’a pas encore trouvé votre match.' }),
+    search.getByText('Les premières pièces arrivent ici.', { exact: true }),
   ).toBeVisible();
+  await search.getByRole('searchbox', { name: 'Rechercher un produit', exact: true }).fill('zzzz');
+  await expect(search.getByText('Aucun résultat pour « zzzz ».', { exact: true })).toBeVisible();
+  await search
+    .getByRole('searchbox', { name: 'Rechercher un produit', exact: true })
+    .press('Enter');
+  await expect(page).toHaveURL(/\/boutique\?q=zzzz$/);
+  await expect(
+    page.getByRole('heading', { name: 'Aucun produit pour cette recherche.' }),
+  ).toBeVisible();
+  await page.goto('/collections?category=dakar&q=zzzz');
+  await expect(page).toHaveURL(/\/boutique\?category=dakar&q=zzzz$/);
+  await expect(page.getByRole('button', { name: 'Rechercher', exact: true })).toHaveCount(1);
+  await expect(page.getByRole('searchbox')).toHaveCount(0);
 });
 
 test('formulaire : validation, succès simulé et échec honnête', async ({ page }) => {
@@ -81,9 +91,12 @@ test('formulaire : validation, succès simulé et échec honnête', async ({ pag
   await expect(page.getByText('Aucun email de confirmation automatique')).toBeVisible();
 });
 
-test('accessibilité WCAG : accueil, contact, collections et dialogue', async ({ page }) => {
+test('accessibilité WCAG : accueil, contact, boutique et dialogue', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  for (const path of ['/', '/contact', '/collections', '/a-propos']) {
+  await page.route('**/api/catalogue?*', (route) =>
+    route.fulfill({ json: { items: [], total: 0, page: 1, pageSize: 24 } }),
+  );
+  for (const path of ['/', '/contact', '/boutique', '/a-propos']) {
     await page.goto(path);
     await page.evaluate(() => document.fonts.ready);
     const result = await new AxeBuilder({ page })

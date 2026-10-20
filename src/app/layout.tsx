@@ -1,8 +1,8 @@
+import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { StoreProvider } from '@/components/store-provider';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
-import './globals.css';
 import { bodyFont, titleFont } from '@/lib/fonts';
 const publicUrl = process.env.NEXT_PUBLIC_SITE_URL;
 export const metadata: Metadata = {

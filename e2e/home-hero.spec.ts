@@ -16,7 +16,7 @@ test('scène 3D : univers, liens réels, pause et interactions', async ({ page, 
   ).toBeVisible();
   await expect(
     scene.getByRole('link', { name: 'Découvrir la collection Sénégal' }),
-  ).toHaveAttribute('href', '/collections?category=senegal');
+  ).toHaveAttribute('href', '/boutique?category=senegal');
   await page.getByRole('button', { name: 'Voir l’univers Accessoires' }).click();
   await expect(scene).toHaveAttribute('data-universe', 'accessoires');
   const pause = scene.getByRole('button', {
@@ -51,7 +51,7 @@ test('scène 3D : univers, liens réels, pause et interactions', async ({ page, 
       .toBe(true);
   }
   await scene.getByRole('link', { name: 'Découvrir la collection Accessoires' }).click();
-  await expect(page).toHaveURL(/collections\?category=accessoires/);
+  await expect(page).toHaveURL(/boutique\?category=accessoires/);
   expect(errors).toEqual([]);
 });
 
@@ -127,12 +127,79 @@ test('sans JavaScript : titre, emblème et liens restent disponibles', async ({ 
   await expect(page.getByTestId('hero-emblem')).toBeVisible();
   await expect(page.getByTestId('hero-scene').locator('figure')).toHaveCount(0);
   await expect(
-    page.getByRole('link', { name: 'Découvrir les collections', exact: true }),
+    page.getByRole('link', { name: 'Découvrir la boutique', exact: true }),
   ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Découvrir la collection Dakar' })).toHaveAttribute(
     'href',
-    '/collections?category=dakar',
+    '/boutique?category=dakar',
   );
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await context.close();
+});
+
+test('cinq piliers lisibles, boutique centrale et présentation au clavier', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const scene = page.getByTestId('hero-scene');
+  const pillars = scene.getByRole('list', { name: 'Les cinq piliers de Gainde Sportif' });
+  await expect(pillars.getByRole('listitem')).toHaveCount(5);
+  for (const name of ['TECH', 'INFRA', 'EVENT', 'MEDIA', 'KIDS']) {
+    await expect(pillars.getByText(`GAINDE ${name}`, { exact: true })).toBeVisible();
+  }
+  const boutique = scene.getByRole('link', {
+    name: 'Gainde Sportif Boutique : découvrir les produits',
+  });
+  await expect(boutique).toHaveAttribute('href', '/boutique');
+  // Vérifier les légendes et la cible Boutique sur toutes les tailles, y compris 320 px.
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    const viewport = (await page.getByTestId('hero-viewport').boundingBox())!;
+    const center = (await boutique.boundingBox())!;
+    expect(viewport.height).toBeLessThanOrEqual(350);
+    expect(Math.abs(center.x + center.width / 2 - (viewport.x + viewport.width / 2))).toBeLessThan(
+      2,
+    );
+    const boxes = await pillars.getByRole('listitem').evaluateAll((items) =>
+      items.map((item) => {
+        const rect = item.getBoundingClientRect();
+        return { x: rect.x, y: rect.y, right: rect.right, bottom: rect.bottom };
+      }),
+    );
+    for (const box of boxes) {
+      expect(box.x).toBeGreaterThanOrEqual(viewport.x);
+      expect(box.right).toBeLessThanOrEqual(viewport.x + viewport.width);
+      // Aucun nom de pilier ne recouvre le lien central.
+      expect(
+        box.right <= center.x ||
+          box.x >= center.x + center.width ||
+          box.bottom <= center.y ||
+          box.y >= center.y + center.height,
+      ).toBe(true);
+    }
+    for (const [i, box] of boxes.entries()) {
+      for (const other of boxes.slice(i + 1)) {
+        expect(
+          box.right <= other.x ||
+            box.x >= other.right ||
+            box.bottom <= other.y ||
+            box.y >= other.bottom,
+        ).toBe(true);
+      }
+    }
+  }
+  const presentation = scene.getByText('Une boutique au cœur de cinq piliers', { exact: true });
+  await presentation.focus();
+  await page.keyboard.press('Enter');
+  await expect(scene.getByText('Le sport pour grandir', { exact: false })).toBeVisible();
+  await expect(
+    scene.getByText('Leurs services se construiront progressivement.', { exact: false }),
+  ).toBeVisible();
+  await page.keyboard.press('Enter');
+  await expect(scene.getByText('Le sport pour grandir', { exact: false })).not.toBeVisible();
+  await expect(page.getByText('DU TERRAIN AUX RUES DU SÉNÉGAL.', { exact: false })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Installer Gainde Sportif', exact: true }),
+  ).toBeVisible();
+  await boutique.click();
+  await expect(page).toHaveURL(/\/boutique$/);
 });

@@ -26,7 +26,7 @@ export function HomeUniverses() {
           <Link
             className={styles.universeCard}
             key={universe.id}
-            href={`/collections?category=${universe.id}`}
+            href={`/boutique?category=${universe.id}`}
           >
             <div className={styles.universeImage}>
               <Image

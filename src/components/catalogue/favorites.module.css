@@ -1,0 +1,115 @@
+@layer components {
+  .cardVisual {
+    position: relative;
+    min-width: 0;
+  }
+  .cardButton,
+  .removeButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 44px;
+    width: 44px;
+    min-height: 44px;
+    border-radius: 50%;
+    color: var(--ink);
+    background: var(--paper);
+  }
+  .cardButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    box-shadow: 0 1px 4px #143e2f14;
+  }
+  .cardButton:hover,
+  .removeButton:hover {
+    background: #e5eadd;
+  }
+  .detailButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 18px;
+    min-height: 48px;
+    border: 1px solid var(--ink);
+    font-size: 13px;
+  }
+  .note {
+    margin-top: 14px;
+    color: #476454;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .list {
+    display: grid;
+    margin-top: 24px;
+  }
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .productLink {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: 16px;
+    min-width: 0;
+  }
+  .image {
+    position: relative;
+    display: block;
+    width: 80px;
+    aspect-ratio: 4 / 5;
+    flex: 0 0 80px;
+    background: #e7e9e0;
+    overflow: hidden;
+  }
+  .image img {
+    object-fit: cover;
+  }
+  .details {
+    display: grid;
+    gap: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  .details small {
+    font-size: 11px;
+  }
+  .details strong {
+    font-size: 14px;
+  }
+  .state {
+    display: grid;
+    justify-items: start;
+    gap: 18px;
+    padding: 32px 0;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .bottom {
+    display: grid;
+    gap: 10px;
+    margin-top: 28px;
+  }
+  @media (max-width: 650px) {
+    .cardButton {
+      top: 6px;
+      right: 6px;
+    }
+    .productLink {
+      gap: 12px;
+    }
+    .image {
+      width: 64px;
+      flex-basis: 64px;
+    }
+  }
+}

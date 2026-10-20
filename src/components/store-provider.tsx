@@ -1,19 +1,37 @@
 'use client';
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowUpRight, Heart, Search, Trash2, ArrowRight, Check } from 'lucide-react';
-import { collections, filterCollections, type CollectionItem } from '@/lib/collections';
+import { ArrowRight, Heart, Trash2 } from 'lucide-react';
+import {
+  catalogueCategoryLabel,
+  formatXof,
+  publicProductSchema,
+  type PublicProduct,
+} from '@/lib/catalogue';
+import { CatalogueImage } from './catalogue/catalogue-image';
 import { Dialog } from './dialog';
+import { SearchDrawer } from './search-drawer';
+import styles from './catalogue/favorites.module.css';
 
-type Modal = 'search' | 'selection' | 'product' | null;
+type SavedProduct = Pick<PublicProduct, 'id' | 'slug'>;
+type Modal = 'search' | 'selection' | null;
 type Store = {
-  saved: string[];
-  toggle: (id: string) => void;
-  openSearch: () => void;
+  saved: SavedProduct[];
+  toggleSaved: (product: PublicProduct) => void;
+  openSearch: (initialQuery?: string) => void;
+  searchOpen: boolean;
   openSelection: () => void;
-  preview: (item: CollectionItem) => void;
 };
+const selectionKey = 'gainde-selection-v2';
+const maxSaved = 24;
 const Context = createContext<Store | null>(null);
 export function useStore() {
   const ctx = useContext(Context);
@@ -21,226 +39,263 @@ export function useStore() {
   return ctx;
 }
 
+function readSaved(): SavedProduct[] {
+  try {
+    // Les anciennes références éditoriales ne correspondent pas aux publications de la boutique.
+    localStorage.removeItem('gainde-selection-v1');
+    const stored: unknown = JSON.parse(localStorage.getItem(selectionKey) || '[]');
+    if (!Array.isArray(stored)) return [];
+    const seen = new Set<string>();
+    return stored
+      .filter((value): value is SavedProduct => {
+        if (!value || typeof value !== 'object') return false;
+        const reference = value as Partial<SavedProduct>;
+        if (
+          typeof reference.id !== 'string' ||
+          !reference.id ||
+          reference.id.length > 200 ||
+          typeof reference.slug !== 'string' ||
+          reference.slug.length > 220 ||
+          !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(reference.slug) ||
+          seen.has(reference.id)
+        )
+          return false;
+        seen.add(reference.id);
+        return true;
+      })
+      .slice(0, maxSaved)
+      .map(({ id, slug }) => ({ id, slug }));
+  } catch {
+    return [];
+  }
+}
+
+function persistSaved(references: SavedProduct[]) {
+  try {
+    localStorage.setItem(selectionKey, JSON.stringify(references));
+  } catch {
+    // Le stockage est facultatif ; la sélection reste utilisable en mémoire.
+  }
+}
+
+type SelectionResource =
+  | { key: string; state: 'loading' | 'error' }
+  | { key: string; state: 'ready'; items: PublicProduct[] };
+
+function PublishedSelection({
+  references,
+  removeMissing,
+  remove,
+  onClose,
+}: {
+  references: SavedProduct[];
+  removeMissing: (ids: string[]) => void;
+  remove: (id: string) => void;
+  onClose: () => void;
+}) {
+  const [resource, setResource] = useState<SelectionResource>({ key: '', state: 'loading' });
+  const [attempt, setAttempt] = useState(0);
+  const referencesKey = JSON.stringify(references);
+  // Chaque ouverture remonte ce composant : aucun ancien prix ou produit en mémoire n'est affiché.
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    async function load() {
+      const missingIds: string[] = [];
+      const items = await Promise.all(
+        references.map(async (reference) => {
+          const response = await fetch(`/api/catalogue/${encodeURIComponent(reference.slug)}`, {
+            cache: 'no-store',
+            headers: { Accept: 'application/json' },
+            signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
+          });
+          if (response.status === 404) {
+            missingIds.push(reference.id);
+            return null;
+          }
+          if (!response.ok) throw new Error('Catalogue inaccessible');
+          const value: unknown = await response.json();
+          const product = publicProductSchema.parse(value);
+          if (product.id !== reference.id) {
+            missingIds.push(reference.id);
+            return null;
+          }
+          return product;
+        }),
+      );
+      if (!active) return;
+      if (missingIds.length) removeMissing(missingIds);
+      setResource({
+        key: referencesKey,
+        state: 'ready',
+        items: items.filter((item): item is PublicProduct => !!item),
+      });
+    }
+    void load().catch(() => {
+      if (active) setResource({ key: referencesKey, state: 'error' });
+    });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [references, referencesKey, removeMissing, attempt]);
+  const current =
+    resource.key === referencesKey ? resource : { key: referencesKey, state: 'loading' as const };
+  return (
+    <>
+      <h2>Vos coups de cœur.</h2>
+      <p className={styles.note}>Votre sélection est conservée sur cet appareil uniquement.</p>
+      {references.length > 0 && current.state === 'loading' && (
+        <p className={styles.state} role="status">
+          Vérification des produits…
+        </p>
+      )}
+      {references.length > 0 && current.state === 'error' && (
+        <div className={styles.state} role="status">
+          <p>
+            Votre sélection est momentanément inaccessible. Vérifiez votre connexion puis réessayez.
+          </p>
+          <button
+            type="button"
+            className="button button-outline"
+            onClick={() => {
+              setResource({ key: referencesKey, state: 'loading' });
+              setAttempt((value) => value + 1);
+            }}
+          >
+            Réessayer
+          </button>
+        </div>
+      )}
+      {references.length > 0 && current.state === 'ready' && (
+        <div className={styles.list}>
+          {current.items.map((product) => {
+            const image = [...product.media]
+              .sort((a, b) => a.position - b.position)
+              .find((media) => media.type === 'image')!;
+            return (
+              <div key={product.id} className={styles.item} data-testid="saved-product">
+                <Link
+                  className={styles.productLink}
+                  href={`/boutique/${product.slug}`}
+                  onClick={onClose}
+                >
+                  <span className={styles.image}>
+                    <CatalogueImage media={{ ...image, alt: '' }} sizes="80px" />
+                  </span>
+                  <span className={styles.details}>
+                    <small>{catalogueCategoryLabel(product.category)}</small>
+                    <strong>{product.name}</strong>
+                    <span>{formatXof(product.priceXof)}</span>
+                  </span>
+                </Link>
+                <button
+                  type="button"
+                  className={styles.removeButton}
+                  onClick={() => remove(product.id)}
+                  aria-label={`Retirer ${product.name} de ma sélection`}
+                >
+                  <Trash2 size={18} aria-hidden="true" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {!references.length && (
+        <div className="empty-state">
+          <Heart size={34} strokeWidth={1.3} aria-hidden="true" />
+          <h3>Votre sélection est vide.</h3>
+          <p>Touchez le cœur d’un produit pour le retrouver ici.</p>
+        </div>
+      )}
+      <div className={styles.bottom}>
+        <Link href="/boutique" className="button button-dark" onClick={onClose}>
+          Voir la boutique <ArrowRight size={18} aria-hidden="true" />
+        </Link>
+        <p className={styles.note}>
+          Pour commander, ouvrez la fiche du produit et contactez l’équipe sur WhatsApp.
+        </p>
+      </div>
+    </>
+  );
+}
+
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [saved, setSaved] = useState<string[]>([]);
+  const [saved, setSaved] = useState<SavedProduct[]>([]);
+  const savedRef = useRef<SavedProduct[]>([]);
   const [modal, setModal] = useState<Modal>(null);
-  const [item, setItem] = useState<CollectionItem | null>(null);
   const [query, setQuery] = useState('');
-  const [activeImage, setActiveImage] = useState(0);
   const [announcement, setAnnouncement] = useState('');
   useEffect(() => {
-    try {
-      const stored: unknown = JSON.parse(localStorage.getItem('gainde-selection-v1') || '[]');
-      if (Array.isArray(stored)) {
-        const ids = stored.filter(
-          (id): id is string => typeof id === 'string' && collections.some((i) => i.id === id),
-        );
-        // Restauration d'une préférence locale, jamais une donnée serveur.
-        queueMicrotask(() => setSaved([...new Set(ids)]));
-      }
-    } catch {
-      /* Navigation privée : la sélection reste utilisable en mémoire. */
-    }
+    const references = readSaved();
+    queueMicrotask(() => {
+      savedRef.current = references;
+      setSaved(references);
+      persistSaved(references);
+    });
   }, []);
-  function toggle(id: string) {
-    const next = saved.includes(id) ? saved.filter((s) => s !== id) : [...saved, id];
+  function replaceSaved(next: SavedProduct[]) {
+    savedRef.current = next;
     setSaved(next);
-    try {
-      localStorage.setItem('gainde-selection-v1', JSON.stringify(next));
-    } catch {
-      /* Stockage facultatif. */
-    }
-    setAnnouncement(next.includes(id) ? 'Ajouté à votre sélection.' : 'Retiré de votre sélection.');
+    persistSaved(next);
   }
-  function preview(product: CollectionItem) {
-    setItem(product);
-    setActiveImage(0);
-    setModal('product');
+  // Référence stable : une réponse API ne doit pas relancer son propre chargement.
+  const removeMissing = useCallback((ids: string[]) => {
+    const next = savedRef.current.filter((reference) => !ids.includes(reference.id));
+    savedRef.current = next;
+    setSaved(next);
+    persistSaved(next);
+    setAnnouncement('Un produit retiré de la boutique a été retiré de votre sélection.');
+  }, []);
+  function remove(id: string) {
+    replaceSaved(savedRef.current.filter((reference) => reference.id !== id));
+    setAnnouncement('Retiré de votre sélection.');
+  }
+  function toggleSaved(product: PublicProduct) {
+    if (savedRef.current.some((reference) => reference.id === product.id))
+      return remove(product.id);
+    if (savedRef.current.length >= maxSaved) {
+      setAnnouncement(
+        `Votre sélection peut contenir ${maxSaved} produits. Retirez une pièce avant d’en ajouter une autre.`,
+      );
+      return;
+    }
+    replaceSaved([...savedRef.current, { id: product.id, slug: product.slug }]);
+    setAnnouncement('Ajouté à votre sélection.');
   }
   const close = () => setModal(null);
-  const results = filterCollections('all', query);
   return (
     <Context.Provider
       value={{
         saved,
-        toggle,
-        openSearch: () => {
-          setQuery('');
+        toggleSaved,
+        searchOpen: modal === 'search',
+        openSearch: (initialQuery = '') => {
+          setQuery(initialQuery);
           setModal('search');
         },
         openSelection: () => setModal('selection'),
-        preview,
       }}
     >
       {children}
       <span className="sr-only" role="status" aria-live="polite">
         {announcement}
       </span>
-      <Dialog
-        open={modal === 'search'}
-        onClose={close}
-        title="À la recherche de votre style ?"
-        className="search-dialog"
-      >
-        <h2>Trouvez votre Gaindé.</h2>
-        <div className="search-field">
-          <Search size={22} />
-          <input
-            autoFocus
-            aria-label="Rechercher une collection"
-            placeholder="Sénégal, Dakar, accessoires…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <span>{results.length}</span>
-        </div>
-        <p className="small muted">
-          Explorez notre sélection visuelle. Les prix et disponibilités sont à confirmer avec
-          l’équipe.
-        </p>
-        <div className="search-results">
-          {results.map((p) => (
-            <button key={p.id} className="search-result" onClick={() => preview(p)}>
-              <Image src={p.image} alt="" width={70} height={85} />
-              <span>
-                <small>{p.categoryLabel}</small>
-                <strong>{p.name}</strong>
-              </span>
-              <ArrowUpRight size={20} />
-            </button>
-          ))}
-          {!results.length && (
-            <div className="empty-state">
-              <Search size={30} />
-              <h3>Aucun résultat pour « {query} ».</h3>
-              <p>Essayez « Dakar » ou « Sénégal ».</p>
-              <button className="text-link" onClick={() => setQuery('')}>
-                Voir toute la sélection <ArrowRight size={18} />
-              </button>
-            </div>
-          )}
-        </div>
-      </Dialog>
+      <SearchDrawer open={modal === 'search'} onClose={close} initialQuery={query} />
       <Dialog
         open={modal === 'selection'}
         onClose={close}
         title={`Ma sélection · ${saved.length}`}
         className="drawer-dialog"
       >
-        <h2>Vos coups de cœur.</h2>
-        <p className="muted">Gardez vos inspirations ici. Ce n’est pas un panier de commande.</p>
-        <div className="selection-list">
-          {saved.map((id) => {
-            const p = collections.find((p) => p.id === id)!;
-            return (
-              <div key={id} className="selection-item">
-                <button className="selection-preview" onClick={() => preview(p)}>
-                  <Image src={p.image} alt="" width={90} height={108} />
-                  <span>
-                    <small>{p.categoryLabel}</small>
-                    <strong>{p.name}</strong>
-                  </span>
-                </button>
-                <button
-                  className="icon-button"
-                  onClick={() => toggle(id)}
-                  aria-label={`Retirer ${p.name}`}
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-        {!saved.length ? (
-          <div className="empty-state">
-            <Heart size={34} strokeWidth={1.3} />
-            <h3>Votre histoire commence ici.</h3>
-            <p>Touchez le cœur d’une pièce pour la retrouver dans votre sélection.</p>
-            <Link href="/collections" className="button button-dark" onClick={close}>
-              Découvrir les collections <ArrowRight size={18} />
-            </Link>
-          </div>
-        ) : (
-          <div className="drawer-bottom">
-            <Link
-              href={`/contact?subject=collection&selection=${encodeURIComponent(saved.map((id) => collections.find((p) => p.id === id)!.name).join(' / '))}`}
-              onClick={close}
-              className="button button-dark"
-            >
-              Parlons de votre sélection <ArrowUpRight size={18} />
-            </Link>
-            <p className="small muted">
-              Votre sélection est conservée sur cet appareil uniquement.
-            </p>
-          </div>
-        )}
-      </Dialog>
-      <Dialog
-        open={modal === 'product' && !!item}
-        onClose={close}
-        title="Un regard de plus"
-        className="product-dialog"
-      >
-        {item && (
-          <div className="quick-view">
-            <div className="quick-image">
-              <Image
-                src={activeImage === 0 ? item.image : item.alternate}
-                alt={activeImage === 0 ? item.imageAlt : `Autre visuel de ${item.categoryLabel}`}
-                width={720}
-                height={900}
-              />
-              <div className="image-switch">
-                <button
-                  className={activeImage === 0 ? 'active' : ''}
-                  onClick={() => setActiveImage(0)}
-                  aria-label="Voir le premier visuel"
-                  aria-pressed={activeImage === 0}
-                >
-                  01
-                </button>
-                <button
-                  className={activeImage === 1 ? 'active' : ''}
-                  onClick={() => setActiveImage(1)}
-                  aria-label="Voir le second visuel"
-                  aria-pressed={activeImage === 1}
-                >
-                  02
-                </button>
-              </div>
-            </div>
-            <div className="quick-content">
-              <span className="eyebrow">{item.categoryLabel}</span>
-              <h2>{item.name}</h2>
-              <p>{item.description}</p>
-              <div className="swatches" aria-label="Couleurs visibles dans la collection">
-                {item.colors.map((c) => (
-                  <span key={c} style={{ background: c }} />
-                ))}
-              </div>
-              <div className="preview-note">
-                <span className="status-dot" />
-                <p>
-                  Aperçu de collection
-                  <br />
-                  <small>Prix, tailles et disponibilités à confirmer avec l’équipe.</small>
-                </p>
-              </div>
-              <Link
-                className="button button-dark"
-                href={`/contact?subject=collection&selection=${encodeURIComponent(item.name)}`}
-                onClick={close}
-              >
-                Me renseigner sur cette pièce <ArrowUpRight size={18} />
-              </Link>
-              <button className="button button-outline" onClick={() => toggle(item.id)}>
-                {saved.includes(item.id) ? <Check size={18} /> : <Heart size={18} />}
-                {saved.includes(item.id) ? 'Retirer de ma sélection' : 'Garder dans ma sélection'}
-              </button>
-              <p className="small muted">Aucun achat ni paiement à cette étape.</p>
-            </div>
-          </div>
+        {modal === 'selection' && (
+          <PublishedSelection
+            references={saved}
+            removeMissing={removeMissing}
+            remove={remove}
+            onClose={close}
+          />
         )}
       </Dialog>
     </Context.Provider>

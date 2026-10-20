@@ -36,7 +36,7 @@ export default function About() {
               Les visuels Dakar rendent hommage au mouvement de la ville. Les tenues Sénégal font
               vibrer l’esprit du football. Et nos accessoires emmènent le lion dans le quotidien.
             </p>
-            <Link href="/collections" className="text-link">
+            <Link href="/boutique" className="text-link">
               Explorer les collections <ArrowUpRight size={19} />
             </Link>
           </div>

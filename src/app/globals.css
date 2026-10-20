@@ -333,6 +333,10 @@
   .rotated {
     transform: rotate(180deg);
   }
+  .header-actions > button[aria-expanded='true'] {
+    background: #e9ece5;
+    border-radius: 50%;
+  }
   .header-actions {
     display: flex;
     align-items: center;
@@ -1018,7 +1022,7 @@
     padding-top: 12px;
   }
   .footer-navigation h3 {
-    font-size: 9px;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.13em;
     margin-bottom: 23px;
@@ -1030,8 +1034,9 @@
     align-items: center;
     justify-content: space-between;
     gap: 9px;
-    font-size: 10px;
-    margin-bottom: 16px;
+    font-size: 14px;
+    min-height: 36px;
+    margin-bottom: 5px;
     width: fit-content;
   }
   .footer-navigation a:hover {
@@ -1043,41 +1048,61 @@
     align-items: center;
     gap: 7px;
     padding: 0;
-    font-size: 10px;
-    min-height: 32px;
+    font-size: 14px;
+    min-height: 44px;
   }
   .install-link:disabled {
     cursor: default;
   }
   .footer-wordmark {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: clamp(12px, 1.5vw, 20px);
     font-family: 'Barlow Condensed', Impact, sans-serif;
-    font-size: clamp(100px, 25.45vw, 470px);
     font-weight: 600;
+    margin-top: 48px;
+    margin-bottom: 32px;
+  }
+  .footer-brand-name {
+    font-size: clamp(80px, 17vw, 260px);
     letter-spacing: -0.025em;
-    line-height: 0.96;
-    margin-top: 47px;
-    margin-left: -8px;
+    line-height: 1;
     white-space: nowrap;
   }
-  .footer-wordmark > span {
+  .footer-brand-symbol {
     font-family: Arial, sans-serif;
-    font-size: 25px;
+    font-size: clamp(14px, 1.6vw, 24px);
     vertical-align: top;
     display: inline-block;
-    padding-top: 25px;
+    padding-top: 0.65em;
     letter-spacing: 0;
     margin-left: 10px;
+  }
+  .footer-brand-sportif {
+    font-size: clamp(20px, 2.4vw, 32px);
+    letter-spacing: 0.3em;
+    line-height: 1.1;
   }
   .footer-bottom {
     min-height: 68px;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 24px;
     border-top: 1px solid #c8d1bf;
-    margin-top: 23px;
-    font-size: 8px;
-    color: #556c50;
+    font-size: 13px;
+    color: #36533f;
+  }
+  .footer-bottom > a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .footer-bottom > a:hover {
+    text-decoration: underline;
+    text-underline-offset: 5px;
   }
   .footer-motto {
     display: inline-flex;
@@ -1111,64 +1136,15 @@
     font-size: 32px;
     margin: 13px 0 18px;
   }
-  .search-dialog {
-    width: 690px;
-  }
-  .search-field {
-    background: white;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    border: 1px solid var(--line);
-    padding: 0 17px;
-    margin-bottom: 15px;
-  }
-  .search-field input {
-    border: 0;
-    background: none;
-    min-width: 0;
-    flex: 1;
-    padding: 18px 0;
-    outline-offset: 3px;
-    font-size: 14px;
-  }
-  .search-field > span {
-    font-size: 10px;
-  }
-  .search-results {
-    margin-top: 20px;
-  }
-  .search-result {
-    display: flex;
-    text-align: left;
-    align-items: center;
-    padding: 10px 0;
-    border-top: 1px solid var(--line);
-    gap: 16px;
-    width: 100%;
-  }
-  .search-result img {
-    height: 72px;
-    width: 61px;
-    object-fit: cover;
-  }
-  .search-result span {
-    flex: 1;
-  }
-  .search-result small,
   .selection-item small {
     display: block;
     font-size: 10px;
     color: var(--muted);
     margin-bottom: 6px;
   }
-  .search-result strong,
   .selection-item strong {
     font-size: 12px;
     font-weight: 500;
-  }
-  .search-result:hover {
-    background: #eeeede;
   }
   .drawer-dialog {
     margin: 0 0 0 auto;
@@ -2258,30 +2234,24 @@
       padding-top: 0;
     }
     .footer-navigation h3 {
-      font-size: 8px;
       margin-bottom: 22px;
     }
     .footer-navigation a {
-      font-size: 10px;
-      margin-bottom: 17px;
+      min-height: 44px;
     }
     .footer-wordmark {
-      font-size: 25.2vw;
       margin-top: 40px;
-      margin-left: -3px;
-    }
-    .footer-wordmark > span {
-      font-size: 13px;
-      padding-top: 7px;
-      margin-left: 5px;
     }
     .footer-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       min-height: 72px;
-      font-size: 7px;
-      gap: 10px;
-      margin-top: 17px;
-      flex-wrap: wrap;
-      padding: 20px 0;
+      font-size: 12px;
+      gap: 8px 16px;
+      padding: 20px 0 12px;
+    }
+    .footer-bottom > span:first-child {
+      grid-column: 1 / -1;
     }
     .footer-motto {
       display: none;
@@ -2306,16 +2276,6 @@
       height: 100svh;
       max-height: 100svh;
       padding: 24px;
-    }
-    .search-field {
-      gap: 10px;
-      padding: 0 13px;
-    }
-    .search-field input {
-      font-size: 12px;
-    }
-    .search-dialog > .small {
-      font-size: 10px;
     }
     .quick-view {
       grid-template-columns: 1fr;
@@ -2538,9 +2498,6 @@
     .footer-navigation {
       gap: 18px;
     }
-    .footer-navigation a {
-      font-size: 9px;
-    }
   }
   @media (prefers-reduced-motion: reduce) {
     html {
@@ -2576,13 +2533,6 @@
   .footer-navigation h3 {
     color: #4e654a;
   }
-  .footer-wordmark > span {
-    font-size: 0;
-  }
-  .footer-wordmark > span:after {
-    content: '✳';
-    font-size: 24px;
-  }
   .nav-link {
     font-size: 13px;
   }
@@ -2608,13 +2558,6 @@
   .team-copy p,
   .about-grid p {
     font-size: 14px;
-  }
-  .footer-navigation a,
-  .install-link {
-    font-size: 12px;
-  }
-  .footer-bottom {
-    font-size: 10px;
   }
   .contact-intro > p {
     font-size: 14px;
@@ -2651,16 +2594,6 @@
     .team-copy p {
       font-size: 13px;
     }
-    .footer-navigation a,
-    .install-link {
-      font-size: 11px;
-    }
-    .footer-navigation h3 {
-      font-size: 10px;
-    }
-    .footer-bottom {
-      font-size: 9px;
-    }
     .contact-intro > p {
       font-size: 14px;
     }
@@ -2687,29 +2620,13 @@
     .product-bottom > span {
       font-size: 8px;
     }
-    .footer-navigation a {
-      font-size: 10px;
-    }
   }
   @media (max-width: 760px) {
-    .footer-navigation a {
-      min-height: 36px;
-      margin-bottom: 5px;
-    }
-    .install-link {
-      min-height: 44px;
-    }
-    .footer-wordmark > span:after {
-      font-size: 14px;
-    }
     .filter-row > button {
       min-height: 44px;
     }
     .hero-story-link {
       min-height: 44px;
-    }
-    .search-result {
-      min-height: 80px;
     }
   }
 }

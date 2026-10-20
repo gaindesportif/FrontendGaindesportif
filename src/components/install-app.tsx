@@ -46,7 +46,7 @@ export function InstallApp() {
     <>
       <button className="install-link" onClick={install} disabled={installed}>
         <Download size={14} />
-        {installed ? 'Application installée' : 'Installer Gaindé'}
+        {installed ? 'Application installée' : 'Installer Gainde Sportif'}
       </button>
       <Dialog
         open={help}

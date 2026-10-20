@@ -6,27 +6,9 @@ import { usePathname } from 'next/navigation';
 import { ArrowUpRight, ChevronDown, Heart, Menu, Search, X } from 'lucide-react';
 import { useStore } from './store-provider';
 import { Dialog } from './dialog';
-
-const links = [
-  {
-    href: '/collections?category=senegal',
-    title: 'L’esprit Sénégal',
-    sub: 'Le football dans la peau.',
-    image: '/images/senegal-vert.webp',
-  },
-  {
-    href: '/collections?category=dakar',
-    title: 'Dakar au quotidien',
-    sub: 'L’énergie de nos rues.',
-    image: '/images/dakar-duo.webp',
-  },
-  {
-    href: '/collections?category=accessoires',
-    title: 'Les essentiels Gaindé',
-    sub: 'Le lion vous accompagne.',
-    image: '/images/tote.webp',
-  },
-];
+import { catalogueCategories } from '@/lib/catalogue';
+import { CollectionsMenuContent } from './collections-menu';
+import styles from './collections-menu.module.css';
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -34,12 +16,17 @@ export function Header() {
   const store = useStore();
   const pathname = usePathname();
   const megaRef = useRef<HTMLDivElement>(null);
+  const collectionsTrigger = useRef<HTMLButtonElement>(null);
+  const openedByHover = useRef(false);
   useEffect(() => {
     function handle(e: KeyboardEvent) {
-      if (e.key === 'Escape') setMenuOpen(false);
+      if (e.key !== 'Escape' || !menuOpen) return;
+      setMenuOpen(false);
+      if (megaRef.current?.contains(document.activeElement)) collectionsTrigger.current?.focus();
     }
     function outside(e: MouseEvent) {
-      if (!megaRef.current?.contains(e.target as Node)) setMenuOpen(false);
+      // Une action interne peut retirer son propre bouton avant cet écouteur.
+      if (!megaRef.current || !e.composedPath().includes(megaRef.current)) setMenuOpen(false);
     }
     document.addEventListener('keydown', handle);
     document.addEventListener('click', outside);
@@ -47,7 +34,7 @@ export function Header() {
       document.removeEventListener('keydown', handle);
       document.removeEventListener('click', outside);
     };
-  }, []);
+  }, [menuOpen]);
   const close = () => {
     setMenuOpen(false);
     setMobileOpen(false);
@@ -73,50 +60,63 @@ export function Header() {
           </span>
         </Link>
         <nav className="desktop-nav" aria-label="Navigation principale">
+          <Link
+            href="/boutique"
+            className={`nav-link ${pathname.startsWith('/boutique') ? 'current' : ''}`}
+            onClick={close}
+          >
+            La boutique
+          </Link>
           <div
             className="mega-anchor"
             ref={megaRef}
-            onMouseEnter={() => setMenuOpen(true)}
-            onMouseLeave={() => setMenuOpen(false)}
+            onMouseEnter={() => {
+              if (!menuOpen) openedByHover.current = true;
+              setMenuOpen(true);
+            }}
+            onMouseLeave={() => {
+              if (!megaRef.current?.contains(document.activeElement)) setMenuOpen(false);
+            }}
+            onBlur={(event) => {
+              if (event.relatedTarget) {
+                if (!event.currentTarget.contains(event.relatedTarget)) setMenuOpen(false);
+                return;
+              }
+              // Le bouton Réessayer disparaît pendant le chargement. Garder le menu
+              // ouvert si le pointeur est encore dedans malgré la perte de focus.
+              requestAnimationFrame(() => {
+                const anchor = megaRef.current;
+                if (!anchor?.contains(document.activeElement) && !anchor?.matches(':hover'))
+                  setMenuOpen(false);
+              });
+            }}
           >
             <button
-              className={`nav-link ${pathname === '/collections' ? 'current' : ''}`}
+              ref={collectionsTrigger}
+              className="nav-link"
               aria-expanded={menuOpen}
               aria-controls="collections-menu"
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={(event) => {
+                // A pointer click following hover keeps the freshly opened panel visible.
+                if (event.detail > 0 && openedByHover.current) {
+                  openedByHover.current = false;
+                  return;
+                }
+                openedByHover.current = false;
+                setMenuOpen(!menuOpen);
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== 'ArrowDown') return;
+                event.preventDefault();
+                setMenuOpen(true);
+                requestAnimationFrame(() => {
+                  megaRef.current?.querySelector<HTMLElement>('#collections-menu a')?.focus();
+                });
+              }}
             >
               Les collections <ChevronDown size={14} className={menuOpen ? 'rotated' : ''} />
             </button>
-            {menuOpen && (
-              <div id="collections-menu" className="mega-menu">
-                <div className="mega-intro">
-                  <span className="eyebrow">À chacun son Gaindé.</span>
-                  <h2>
-                    Une identité.
-                    <br />
-                    Plusieurs façons
-                    <br />
-                    de la porter.
-                  </h2>
-                  <Link onClick={close} href="/collections" className="text-link">
-                    Tout découvrir <ArrowRightIcon />
-                  </Link>
-                </div>
-                <div className="mega-collections">
-                  {links.map((l) => (
-                    <Link key={l.href} href={l.href} onClick={close}>
-                      <div className="mega-image">
-                        <Image src={l.image} alt="" width={220} height={220} />
-                      </div>
-                      <strong>
-                        {l.title} <ArrowUpRight size={16} />
-                      </strong>
-                      <small>{l.sub}</small>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
+            {menuOpen && <CollectionsMenuContent onNavigate={close} />}
           </div>
           <Link
             href="/a-propos"
@@ -133,9 +133,16 @@ export function Header() {
           <button
             className="icon-button"
             aria-label="Rechercher"
+            aria-haspopup="dialog"
+            aria-controls="product-search-dialog"
+            aria-expanded={store.searchOpen}
             onClick={() => {
               close();
-              store.openSearch();
+              store.openSearch(
+                pathname === '/boutique'
+                  ? new URLSearchParams(window.location.search).get('q') || ''
+                  : '',
+              );
             }}
           >
             <Search size={21} strokeWidth={1.6} />
@@ -175,13 +182,18 @@ export function Header() {
           <Link href="/" onClick={close}>
             Accueil <ArrowUpRight />
           </Link>
-          <Link href="/collections" onClick={close}>
-            Les collections <ArrowUpRight />
+          <Link href="/boutique" onClick={close}>
+            La boutique <ArrowUpRight />
           </Link>
+          <p className={styles.mobileCollectionLabel}>Les collections</p>
           <div className="mobile-sub-links">
-            {links.map((l) => (
-              <Link key={l.href} href={l.href} onClick={close}>
-                {l.title}
+            {catalogueCategories.map((category) => (
+              <Link
+                key={category.value}
+                href={`/boutique?category=${category.value}`}
+                onClick={close}
+              >
+                {category.label}
               </Link>
             ))}
           </div>
@@ -213,7 +225,4 @@ export function Header() {
       )}
     </>
   );
-}
-function ArrowRightIcon() {
-  return <ArrowUpRight size={18} />;
 }

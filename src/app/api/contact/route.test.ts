@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { POST } from './route';
 const valid = {
@@ -17,6 +17,9 @@ function request(body: unknown = valid, origin = 'http://localhost:3000') {
     body: JSON.stringify(body),
   });
 }
+beforeEach(() => {
+  vi.stubEnv('NEXT_PUBLIC_SITE_URL', '');
+});
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();

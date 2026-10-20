@@ -103,6 +103,14 @@ test.describe('rendu WebGL réel', () => {
     expect(await stage.getAttribute('data-frames')).toBe(pausedFrames);
     await scene.getByRole('button', { name: 'Voir l’univers Sénégal' }).click();
     await expect(stage).toHaveAttribute('data-universe', 'senegal');
+    await expect(stage).toHaveAttribute('data-shape', 'star');
+    await scene.getByRole('button', { name: 'Voir l’univers Accessoires' }).click();
+    await expect(stage).toHaveAttribute('data-universe', 'accessoires');
+    await expect(stage).toHaveAttribute('data-shape', 'star');
+    await expect(
+      scene.getByRole('list', { name: 'Les cinq piliers de Gainde Sportif' }).getByRole('listitem'),
+    ).toHaveCount(5);
+    await scene.getByRole('button', { name: 'Voir l’univers Sénégal' }).click();
     await scene.getByRole('button', { name: 'Reprendre les animations et le défilement' }).click();
     await expect(stage).toHaveAttribute('data-running', 'true');
     const previous = Number(await stage.getAttribute('data-frames'));

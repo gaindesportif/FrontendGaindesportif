@@ -20,7 +20,7 @@ export function HomeHero() {
           </span>
           <KineticTitle />
           <div className={styles.copyRule}>
-            <span aria-hidden="true">✳</span> DU TERRAIN AUX RUES DE DAKAR.
+            <span aria-hidden="true">✳</span> DU TERRAIN AUX RUES DU SÉNÉGAL.
           </div>
           <p>
             <span className={styles.copySentence}>
@@ -31,8 +31,8 @@ export function HomeHero() {
             </span>
           </p>
           <div className={styles.actions}>
-            <Link href="/collections" className={styles.primaryButton}>
-              Découvrir les collections <ArrowUpRight size={21} />
+            <Link href="/boutique" className={styles.primaryButton}>
+              Découvrir la boutique <ArrowUpRight size={21} />
             </Link>
             <Link href="/a-propos" className={styles.secondaryButton}>
               L’esprit Gaindé <MoveRight size={20} />

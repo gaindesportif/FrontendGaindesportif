@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { contactSchema } from '@/lib/contact';
-import { createHmac } from 'node:crypto';
-import { isIP } from 'node:net';
+import { backendClientHeaders } from '@/lib/backend-request.server';
 export async function POST(request: NextRequest) {
   const origin = request.headers.get('origin');
   // Même origine uniquement pour les navigateurs, URL publique explicitement configurée derrière proxy.
@@ -40,7 +39,10 @@ export async function POST(request: NextRequest) {
   try {
     const backend = process.env.BACKEND_URL;
     if (!backend) throw new Error('Backend non configuré');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...backendClientHeaders(request.headers),
+    };
     const requestKey = request.headers.get('idempotency-key');
     if (requestKey) {
       if (
@@ -48,18 +50,6 @@ export async function POST(request: NextRequest) {
       )
         return NextResponse.json({ message: 'Référence de demande invalide.' }, { status: 400 });
       headers['Idempotency-Key'] = requestKey;
-    }
-    const secret = process.env.CONTACT_PROXY_SECRET;
-    const ipHeader = process.env.CONTACT_IP_HEADER;
-    // Activer uniquement une fois le header réécrit par Vercel/Traefik validé.
-    const ip = ipHeader ? request.headers.get(ipHeader)?.split(',')[0].trim() || '' : '';
-    if (secret && secret.length >= 32 && isIP(ip)) {
-      const timestamp = String(Date.now());
-      headers['x-gainde-client-ip'] = ip;
-      headers['x-gainde-timestamp'] = timestamp;
-      headers['x-gainde-signature'] = createHmac('sha256', secret)
-        .update(`${ip}:${timestamp}`)
-        .digest('hex');
     }
     const response = await fetch(`${backend.replace(/\/$/, '')}/api/v1/contacts`, {
       method: 'POST',

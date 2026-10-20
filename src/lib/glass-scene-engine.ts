@@ -59,6 +59,7 @@ function buildGlassScene(
   canvas.setAttribute('aria-hidden', 'true');
   canvas.dataset.testid = 'glass-canvas';
   host.appendChild(canvas);
+  host.dataset.shape = 'star';
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 50);
@@ -233,22 +234,6 @@ function buildGlassScene(
   );
   emblem.add(starBody);
 
-  const ball = ownGeometry(new THREE.IcosahedronGeometry(1.36, 1));
-  const ballBody = new THREE.Group();
-  const ballGlass = ownMaterial(glass.clone());
-  ballGlass.flatShading = true;
-  ballBody.add(new THREE.Mesh(ball, ballGlass));
-  ballBody.add(new THREE.LineSegments(ownGeometry(new THREE.EdgesGeometry(ball, 1)), edgeMaterial));
-  ballBody.visible = false;
-  emblem.add(ballBody);
-
-  const knotBody = new THREE.Group();
-  knotBody.add(
-    new THREE.Mesh(ownGeometry(new THREE.TorusKnotGeometry(0.95, 0.28, 128, 14, 2, 3)), glass),
-  );
-  knotBody.visible = false;
-  emblem.add(knotBody);
-
   // Le logo reste celui de la marque ; les formes autour sont symboliques, pas des produits.
   const seal = new THREE.Group();
   const ring = new THREE.Mesh(ownGeometry(new THREE.TorusGeometry(0.44, 0.035, 12, 64)), gold);
@@ -344,15 +329,12 @@ function buildGlassScene(
     if (!moving || (!swapped && transition >= 0.5)) {
       currentUniverse = moving ? transitionUniverse : targetUniverse;
       swapped = true;
-      starBody.visible = currentUniverse === 'dakar';
-      ballBody.visible = currentUniverse === 'senegal';
-      knotBody.visible = currentUniverse === 'accessoires';
-      seal.position.z = currentUniverse === 'dakar' ? 0.42 : 1.45;
+      // L’étoile porte toujours les cinq piliers ; les collections changent sa palette.
     }
     const { scale, turn } = transitionPose(transition);
-    emblem.scale.setScalar(scale);
+    emblem.scale.setScalar(scale * 0.82);
     const rotationY =
-      0.3 + (moving ? Math.sin(phase * 0.38) * 0.42 + pointerX * 0.24 + scroll * 0.7 : 0);
+      0.08 + (moving ? Math.sin(phase * 0.38) * 0.12 + pointerX * 0.1 + scroll * 0.08 : 0);
     if (moving || frames === 0) {
       emblem.rotation.y = THREE.MathUtils.lerp(emblem.rotation.y, rotationY + turn, damping);
       emblem.rotation.x = THREE.MathUtils.lerp(
@@ -360,7 +342,7 @@ function buildGlassScene(
         0.13 + (moving ? pointerY * 0.13 + Math.sin(phase * 0.25) * 0.08 : 0),
         damping,
       );
-      emblem.rotation.z = moving ? Math.sin(phase * 0.27) * 0.07 - 0.06 : -0.06;
+      emblem.rotation.z = moving ? Math.sin(phase * 0.27) * 0.025 : 0;
       emblem.position.y = moving ? Math.sin(phase * 0.7) * 0.08 : 0;
       orbitGroup.rotation.z = moving ? phase * 0.035 : 0;
     }
@@ -368,7 +350,6 @@ function buildGlassScene(
       if (moving) shard.rotation.y = phase * 0.18 + index;
     });
     glass.color.lerp(targetColor, damping);
-    ballGlass.color.copy(glass.color);
     edgeMaterial.color.lerp(targetEdge, damping);
     gold.color.lerp(targetAccent, damping);
     renderer.render(scene, camera);
