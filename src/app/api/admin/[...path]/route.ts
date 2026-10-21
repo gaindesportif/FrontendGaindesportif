@@ -9,6 +9,8 @@ const allowedRoutes: Array<[RegExp, readonly string[]]> = [
   [/^auth\/me$/, ['GET']],
   [/^auth\/(logout|password)$/, ['POST']],
   [/^accounts$/, ['GET', 'POST']],
+  [/^customer-requests$/, ['GET']],
+  [new RegExp(`^customer-requests/${ID}/status$`), ['PATCH']],
   [new RegExp(`^accounts/${ID}$`), ['PATCH']],
   [/^products$/, ['GET', 'POST']],
   [new RegExp(`^products/${ID}$`), ['GET', 'PATCH', 'DELETE']],

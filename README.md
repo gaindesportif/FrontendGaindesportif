@@ -121,3 +121,28 @@ Les tests axe ne constituent pas un audit humain complet d’accessibilité. L�
 Vercel est possible pour le frontend sans acheter un autre domaine. Docker/Dokploy est prévu pour le VPS. Les variables publiques de métadonnées doivent être définies avant le build ; `BACKEND_URL` reste une variable serveur à l’exécution. Voir [la préparation du déploiement](docs/DEPLOIEMENT.md).
 
 GitHub Actions vérifie lint, tests, build et navigateur. Aucun déploiement externe effectué à cette étape.
+
+
+## Espace client — extension locale du 21/10/2026
+
+Entrée « Mon compte » dans le header ordinateur/mobile, routes `/compte`, `/compte/connexion`, `/compte/inscription` et `/compte/recuperation`. Le parcours reprend la présentation crème/vert profond du site. L’administration reste séparée.
+
+- Inscription et connexion par e-mail/mot de passe. Confirmation d’adresse et récupération par liens e-mail à usage unique, avec erreurs honnêtes si SMTP n’est pas configuré. Aucun mot de passe, jeton ou historique dans le stockage Web.
+- Session côté serveur via BFF `/api/customer/*`, cookie HttpOnly, Secure en production, SameSite Lax et chemin `/api/customer`, distinct du cookie administrateur. Origine exacte obligatoire sur toute écriture, routes/méthodes autorisées explicitement, corps JSON borné, projections de réponses strictes, pas de cache privé.
+- Cliquer sur un cœur hors connexion conduit à la connexion/inscription ; la fiche et l’intention de favori sont reprises ensuite. Les favoris sont conservés par compte et relus avec prix/disponibilité actuels. Une sélection de l’ancienne version peut être importée explicitement depuis le panneau « Ma sélection ».
+- Espace personnel : favoris, 30 consultations récentes avec effacement/désactivation, 50 demandes WhatsApp préparées, profil, changement de mot de passe et suppression du compte. Les réponses tardives d’un ancien compte et les déconnexions entre onglets sont prises en compte ; aucune fusion automatique d’un appareil partagé.
+- WhatsApp garde son lien direct et reste utilisable sans compte. Pour un client connecté, l’ouverture du lien enregistre la préparation et les options côté API ; une panne de cet historique n’empêche pas d’ouvrir WhatsApp. Ni message envoyé ni commande confirmée ne sont annoncés.
+- Pages privées non indexables et `no-store` ; PWA exclut explicitement `/compte` et toutes les API. Pas de profil/favoris/historique mis en cache hors connexion.
+
+Tests : `e2e/customer-account.spec.ts`, adaptation des anciens tests de favoris dans `e2e/unified-shop.spec.ts`, unités BFF client et retour interne sécurisé. Les tests navigateur utilisent des données synthétiques sur Chrome ordinateur et Pixel 7 simulé. La recette complète HTTP/SQL locale et les captures sont référencées dans le contexte parent ; elles ne valent pas publication ni acceptation manager.
+
+Le backend et sa migration cliente doivent être livrés avant ce frontend, après accord. La production actuelle continue à servir la version précédemment déployée. La source unique de suivi reste `../ProjetContexte.md`.
+
+
+### E-mails et suivi des demandes
+
+- `/compte/recuperation` demande un lien par e-mail ; `/compte/reinitialiser#token=…` ouvre le choix du nouveau mot de passe. `/compte/confirmer-email#token=…` exige un clic de confirmation. Le fragment est retiré de l’URL après lecture ; aucun jeton conservé dans le stockage navigateur ou le cache PWA.
+- Le profil propose le renvoi du lien de confirmation. Après inscription, le site indique si le lien a été mis en file ; si le service est absent, le compte reste utilisable et aucun envoi n’est annoncé.
+- `/administration/demandes` affiche les demandes préparées par les clients connectés. L’équipe vérifie WhatsApp et confirme manuellement réception, expédition, livraison ou annulation. Dialogue de confirmation, version contre modifications concurrentes, état d’e-mail et erreurs réessayables. Aucun suivi transporteur ni API WhatsApp supposé.
+- Le compte client affiche ces statuts, avec la date de mise à jour. Les notifications se limitent aux adresses confirmées. Les réglages Gmail et la clé de chiffrement appartiennent uniquement à l’environnement backend ; aucun secret `NEXT_PUBLIC_*`.
+- Les migrations backend doivent être appliquées avant déploiement des deux applications ; ne pas redéployer le conteneur PostgreSQL pour exécuter une migration.

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ArrowUpRight, ChevronDown, Heart, Menu, Search, X } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, Heart, Menu, Search, UserRound, X } from 'lucide-react';
 import { useStore } from './store-provider';
 import { Dialog } from './dialog';
 import { catalogueCategories } from '@/lib/catalogue';
@@ -160,6 +160,9 @@ export function Header() {
               <span className="selection-count">{store.saved.length}</span>
             )}
           </button>
+          <Link href="/compte" className="icon-button" aria-label="Mon compte" onClick={close}>
+            <UserRound size={21} strokeWidth={1.6} aria-hidden="true" />
+          </Link>
           <Link href="/contact" className="header-contact">
             Parlons-en <ArrowUpRight size={16} />
           </Link>
@@ -202,6 +205,9 @@ export function Header() {
           </Link>
           <Link href="/contact?subject=personnalisation" onClick={close}>
             Votre équipe <ArrowUpRight />
+          </Link>
+          <Link href="/compte" onClick={close}>
+            Mon compte <ArrowUpRight />
           </Link>
           <Link href="/contact" onClick={close}>
             Contact <ArrowUpRight />

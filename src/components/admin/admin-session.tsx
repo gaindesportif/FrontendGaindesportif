@@ -110,6 +110,12 @@ export function AdminSession({ children }: { children: ReactNode }) {
             >
               {user.role === 'owner' ? 'Comptes et sécurité' : 'Ma sécurité'}
             </Link>
+            <Link
+              href="/administration/demandes"
+              aria-current={pathname === '/administration/demandes' ? 'page' : undefined}
+            >
+              Demandes clients
+            </Link>
             <Link href="/boutique">Voir la boutique</Link>
           </nav>
         )}

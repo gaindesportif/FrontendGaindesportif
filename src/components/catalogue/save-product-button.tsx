@@ -12,12 +12,14 @@ export function SaveProductButton({
   product: PublicProduct;
   showLabel?: boolean;
 }) {
-  const { saved, toggleSaved } = useStore();
+  const { saved, toggleSaved, saving, accountLoading } = useStore();
   const selected = saved.some((reference) => reference.id === product.id);
   return (
     <button
       type="button"
       className={showLabel ? styles.detailButton : styles.cardButton}
+      disabled={accountLoading || saving.includes(product.id)}
+      aria-busy={saving.includes(product.id)}
       aria-pressed={selected}
       aria-label={`${selected ? 'Retirer' : 'Ajouter'} ${product.name} ${selected ? 'de' : 'à'} ma sélection`}
       onClick={() => toggleSaved(product)}

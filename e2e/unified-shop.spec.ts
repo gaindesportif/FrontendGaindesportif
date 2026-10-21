@@ -129,70 +129,34 @@ test('menu collections : publications récentes, retrait, panne et brouillon ref
   await expect(menu.getByRole('img')).toHaveCount(0);
 });
 
-test('favoris : publications vérifiées, persistance locale, prix actualisé et retrait', async ({
-  page,
-}) => {
+test('favoris : une inscription est nécessaire pour enregistrer une envie', async ({ page }) => {
   await images(page);
-  let withdrawn = false;
-  let price = product.priceXof;
+  await page.route('**/api/customer/auth/me', (route) => route.fulfill({ status: 401, json: {} }));
   await page.route('**/api/catalogue?*', (route) => route.fulfill({ json: catalogue() }));
-  await page.route(`**/api/catalogue/${product.slug}`, (route) =>
-    route.fulfill(
-      withdrawn ? { status: 404, json: {} } : { json: { ...product, priceXof: price } },
-    ),
-  );
   await page.goto('/boutique');
-  await page
-    .getByRole('button', { name: `Ajouter ${product.name} à ma sélection`, exact: true })
-    .click();
-  await expect(page).toHaveURL(/\/boutique$/);
-  await page.reload();
-  await expect(page.getByRole('button', { name: 'Ma sélection, 1 pièces' })).toBeVisible();
-  price = 13000;
-  await page.getByRole('button', { name: 'Ma sélection, 1 pièces' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Ma sélection · 1', exact: true });
-  await expect(dialog.getByTestId('saved-product')).toHaveCount(1);
-  await expect(dialog.getByText(/13\s000 F CFA/)).toBeVisible();
-  await expect(dialog.getByRole('link', { name: new RegExp(product.name) })).toHaveAttribute(
-    'href',
-    `/boutique/${product.slug}`,
-  );
-  await page.keyboard.press('Escape');
-  withdrawn = true;
-  await page.getByRole('button', { name: 'Ma sélection, 1 pièces' }).click();
-  await expect(page.getByRole('dialog').getByText('Votre sélection est vide.')).toBeVisible();
-  await expect(page.getByTestId('saved-product')).toHaveCount(0);
-  await expect
-    .poll(() =>
-      page.evaluate(() => JSON.parse(localStorage.getItem('gainde-selection-v2') || '[]').length),
-    )
-    .toBe(0);
+  const heart = page.getByRole('button', {
+    name: `Ajouter ${product.name} à ma sélection`,
+    exact: true,
+  });
+  await expect(heart).toBeEnabled();
+  await heart.click();
+  await expect(page).toHaveURL(/\/compte\/connexion\?/);
+  await expect(page.getByRole('heading', { name: 'Heureux de vous revoir' })).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('gainde-selection-v2'))).toBeNull();
 });
 
-test('favoris : panne sans ancien produit affiché, reprise et anciennes images ignorées', async ({
+test('favoris : aucune ancienne sélection de cet appareil affichée hors connexion', async ({
   page,
 }) => {
-  await images(page);
-  let unavailable = true;
   await page.addInitScript(({ id, slug }) => {
-    localStorage.setItem('gainde-selection-v1', JSON.stringify(['senegal-vert']));
     localStorage.setItem('gainde-selection-v2', JSON.stringify([{ id, slug }]));
   }, product);
-  await page.route(`**/api/catalogue/${product.slug}`, (route) =>
-    route.fulfill(unavailable ? { status: 503, json: {} } : { json: product }),
-  );
+  await page.route('**/api/customer/auth/me', (route) => route.fulfill({ status: 401, json: {} }));
   await page.goto('/a-propos');
-  await page.getByRole('button', { name: 'Ma sélection, 1 pièces' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Ma sélection · 1', exact: true });
-  await expect(dialog.getByText(/Votre sélection est momentanément inaccessible/)).toBeVisible();
-  await expect(dialog.locator('img')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Ma sélection, 0 pièces' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('link', { name: 'Me connecter', exact: true })).toBeVisible();
   await expect(dialog.getByTestId('saved-product')).toHaveCount(0);
-  expect(await page.evaluate(() => localStorage.getItem('gainde-selection-v1'))).toBeNull();
-  unavailable = false;
-  await dialog.getByRole('button', { name: 'Réessayer', exact: true }).click();
-  await expect(dialog.getByTestId('saved-product')).toHaveCount(1);
-  await dialog
-    .getByRole('button', { name: `Retirer ${product.name} de ma sélection`, exact: true })
-    .click();
-  await expect(page.getByRole('dialog').getByText('Votre sélection est vide.')).toBeVisible();
+  await expect(dialog.locator('img')).toHaveCount(0);
+  await expect(dialog.getByText(product.name, { exact: true })).toHaveCount(0);
 });

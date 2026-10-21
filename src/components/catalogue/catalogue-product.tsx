@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowUpRight, ImageOff, MessageCircle, Minus, Play, Plus } from 'lucide-react';
 import {
   catalogueCategoryLabel,
@@ -16,6 +16,9 @@ import { CatalogueState } from './catalogue-state';
 import { CatalogueImage } from './catalogue-image';
 import styles from './catalogue.module.css';
 import { SaveProductButton } from './save-product-button';
+import { CustomerProductActivity } from './customer-product-activity';
+import { useCustomer } from '@/components/account/customer-provider';
+import { customerFetch } from '@/lib/customer-client';
 
 function ProductVideo({ media }: { media: PublicMedia }) {
   const [failed, setFailed] = useState(false);
@@ -89,6 +92,12 @@ function ProductGallery({ product }: { product: PublicProduct }) {
 }
 
 function ProductRequest({ product }: { product: PublicProduct }) {
+  const { user, status } = useCustomer();
+  const identity = useRef(user?.id);
+  useLayoutEffect(() => {
+    identity.current = user?.id;
+  }, [user?.id]);
+  const [historyNotice, setHistoryNotice] = useState('');
   const [size, setSize] = useState('');
   const [color, setColor] = useState('');
   const [quantity, setQuantity] = useState('1');
@@ -99,6 +108,34 @@ function ProductRequest({ product }: { product: PublicProduct }) {
   const whatsapp = origin
     ? productWhatsappUrl(product, { quantity: amount, size, color }, origin)
     : null;
+  function rememberWhatsapp() {
+    if (status !== 'authenticated' || !user || !whatsapp) return;
+    const accountId = user.id;
+    setHistoryNotice('');
+    // L’ancre ouvre WhatsApp normalement ; cette écriture ne prétend pas envoyer le message.
+    void customerFetch('requests', {
+      method: 'POST',
+      body: JSON.stringify({
+        productId: product.id,
+        quantity: amount,
+        ...(size ? { size } : {}),
+        ...(color ? { color } : {}),
+        requestKey: crypto.randomUUID(),
+      }),
+    })
+      .then(() => {
+        if (identity.current === accountId)
+          setHistoryNotice(
+            'Demande préparée ajoutée à votre historique. L’envoi reste à effectuer dans WhatsApp.',
+          );
+      })
+      .catch(() => {
+        if (identity.current === accountId)
+          setHistoryNotice(
+            'WhatsApp reste accessible, mais l’ajout à votre historique n’a pas pu être confirmé.',
+          );
+      });
+  }
   if (product.availability === 'unavailable')
     return (
       <div className={styles.order}>
@@ -199,6 +236,7 @@ function ProductRequest({ product }: { product: PublicProduct }) {
         {whatsapp ? (
           <a
             data-testid="product-whatsapp"
+            onClick={rememberWhatsapp}
             className="button button-dark"
             href={whatsapp}
             target="_blank"
@@ -211,6 +249,7 @@ function ProductRequest({ product }: { product: PublicProduct }) {
             Commander sur WhatsApp <MessageCircle size={20} aria-hidden="true" />
           </button>
         )}
+        {historyNotice && <p role="status">{historyNotice}</p>}
         <p>
           Votre demande s’ouvre dans WhatsApp. L’équipe confirme la disponibilité, le règlement et
           la livraison ou le retrait avant toute commande.
@@ -261,6 +300,7 @@ export function CatalogueProduct({ slug }: { slug: string }) {
       )}
       {resource.state === 'ready' && (
         <div className={styles.product}>
+          <CustomerProductActivity productId={resource.data.id} />
           <ProductGallery key={resource.data.id} product={resource.data} />
           <div className={styles.productInfo}>
             <header>

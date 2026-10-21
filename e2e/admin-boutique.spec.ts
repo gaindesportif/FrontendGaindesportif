@@ -193,6 +193,7 @@ test('administration : import image direct vers Cloudinary, publication et retra
     );
   });
   await page.goto(`/administration/produits/${product.id}`);
+  await expect(page.getByLabel('Importer des images', { exact: true })).toBeEnabled();
   await page
     .getByLabel('Importer des images', { exact: true })
     .setInputFiles({ name: 'photo-recette.png', mimeType: 'image/png', buffer: png });

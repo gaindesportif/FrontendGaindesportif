@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
+import { CustomerProvider } from '@/components/account/customer-provider';
 import { StoreProvider } from '@/components/store-provider';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
@@ -38,13 +39,15 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <a href="#main" className="skip-link">
           Aller au contenu
         </a>
-        <StoreProvider>
-          <Header />
-          <main id="main" tabIndex={-1} className="min-h-[60svh] focus:outline-none">
-            {children}
-          </main>
-          <Footer />
-        </StoreProvider>
+        <CustomerProvider>
+          <StoreProvider>
+            <Header />
+            <main id="main" tabIndex={-1} className="min-h-[60svh] focus:outline-none">
+              {children}
+            </main>
+            <Footer />
+          </StoreProvider>
+        </CustomerProvider>
       </body>
     </html>
   );
