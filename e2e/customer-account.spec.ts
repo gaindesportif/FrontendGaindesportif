@@ -64,6 +64,7 @@ async function mockCustomer(
     wishlist?: (typeof product)[];
     history?: HistoryItem[];
     wishlistUnavailable?: boolean;
+    emailEnabled?: boolean;
   } = {},
 ) {
   let user: Customer | null = options.user ?? null;
@@ -92,9 +93,10 @@ async function mockCustomer(
     const method = route.request().method();
     const body = route.request().postDataJSON() as Record<string, unknown> | null;
     requests.push({ path, method, accountId: user?.id ?? null, body });
+    if (path === 'config') return json(route, { emailEnabled: options.emailEnabled ?? true });
     if (path === 'auth/register') {
       user = { ...alice, displayName: String(body?.displayName), email: String(body?.email) };
-      return json(route, { user, verificationQueued: true }, 201);
+      return json(route, { user, verificationQueued: options.emailEnabled ?? true }, 201);
     }
     if (path === 'auth/login') {
       if (body?.password !== password)
@@ -623,4 +625,53 @@ test('compte : formulaires e-mail accessibles sur écran étroit et jeton consom
       true,
     );
   }
+});
+
+test('compte : sans e-mail, inscription et favoris utilisables sans faux message ni récupération', async ({
+  page,
+}) => {
+  const fixture = await mockCustomer(page, { emailEnabled: false });
+  await page.goto(`/compte/inscription?next=/boutique/${product.slug}&favorite=${product.id}`);
+  await page.getByLabel('Votre nom', { exact: true }).fill(alice.displayName);
+  await page.getByLabel('Adresse e-mail', { exact: true }).fill(alice.email);
+  await page.getByLabel('Mot de passe', { exact: true }).fill(password);
+  await page.getByLabel('Confirmer le mot de passe', { exact: true }).fill(password);
+  await page.getByRole('checkbox', { name: /confidentialité/ }).check();
+  await page.getByRole('button', { name: 'Créer mon compte', exact: true }).click();
+  await expect(page.getByRole('main').getByRole('status')).toContainText('Votre compte est créé');
+  await expect(page.getByRole('main').getByText(/Consultez votre boîte/)).toHaveCount(0);
+  await page.getByRole('link', { name: 'Continuer', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: `Retirer ${product.name} de ma sélection`, exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await page.goto('/compte');
+  await page.getByRole('button', { name: 'Mon profil', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Recevoir le lien de confirmation', exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByRole('main')).toContainText('ne sont pas activés');
+  await page.getByLabel('Votre nom', { exact: true }).fill('Nom actualisé');
+  await page.getByRole('button', { name: 'Enregistrer mon nom', exact: true }).click();
+  await expect(page.getByRole('main').getByRole('status')).toContainText(
+    'Votre nom a été mis à jour.',
+  );
+  await expect(page.getByRole('button', { name: 'Mon profil', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(
+    page.getByRole('heading', { name: 'Bonjour, Nom actualisé', exact: true }),
+  ).toBeVisible();
+  await page.goto('/compte/recuperation');
+  await expect(page.getByRole('main')).toContainText(
+    'La récupération par e-mail n’est pas disponible',
+  );
+  await expect(page.getByLabel('Adresse e-mail', { exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole('link', { name: 'Contacter notre équipe', exact: true }),
+  ).toHaveAttribute('href', '/contact');
+  expect(
+    fixture.requests.filter((r) => ['auth/forgot', 'auth/resend-verification'].includes(r.path)),
+  ).toHaveLength(0);
+  await expectNoPrivateStorage(page);
 });

@@ -127,6 +127,7 @@ GitHub Actions vérifie lint, tests, build et navigateur. Aucun déploiement ext
 
 Entrée « Mon compte » dans le header ordinateur/mobile, routes `/compte`, `/compte/connexion`, `/compte/inscription` et `/compte/recuperation`. Le parcours reprend la présentation crème/vert profond du site. L’administration reste séparée.
 
+- **Livraison actuelle sans envoi d’e-mail** : comptes, favoris, historiques et demandes WhatsApp restent utilisables. Le BFF `GET /api/customer/config` ne transmet que la disponibilité de l’envoi ; sur erreur, les actions d’envoi restent désactivées. Aucun secret SMTP n’est exposé.
 - Inscription et connexion par e-mail/mot de passe. Confirmation d’adresse et récupération par liens e-mail à usage unique, avec erreurs honnêtes si SMTP n’est pas configuré. Aucun mot de passe, jeton ou historique dans le stockage Web.
 - Session côté serveur via BFF `/api/customer/*`, cookie HttpOnly, Secure en production, SameSite Lax et chemin `/api/customer`, distinct du cookie administrateur. Origine exacte obligatoire sur toute écriture, routes/méthodes autorisées explicitement, corps JSON borné, projections de réponses strictes, pas de cache privé.
 - Cliquer sur un cœur hors connexion conduit à la connexion/inscription ; la fiche et l’intention de favori sont reprises ensuite. Les favoris sont conservés par compte et relus avec prix/disponibilité actuels. Une sélection de l’ancienne version peut être importée explicitement depuis le panneau « Ma sélection ».
@@ -141,8 +142,9 @@ Le backend et sa migration cliente doivent être livrés avant ce frontend, apr�
 
 ### E-mails et suivi des demandes
 
-- `/compte/recuperation` demande un lien par e-mail ; `/compte/reinitialiser#token=…` ouvre le choix du nouveau mot de passe. `/compte/confirmer-email#token=…` exige un clic de confirmation. Le fragment est retiré de l’URL après lecture ; aucun jeton conservé dans le stockage navigateur ou le cache PWA.
+- Tant que l’envoi est désactivé, aucun lien de récupération ni bouton de confirmation/renvoi n’est proposé ; `/compte/recuperation` affiche l’indisponibilité et l’accès au contact sans formulaire ni faux succès.
+- Lorsque l’envoi sera activé, `/compte/recuperation` demandera un lien par e-mail ; `/compte/reinitialiser#token=…` ouvre le choix du nouveau mot de passe. `/compte/confirmer-email#token=…` exige un clic de confirmation. Le fragment est retiré de l’URL après lecture ; aucun jeton conservé dans le stockage navigateur ou le cache PWA.
 - Le profil propose le renvoi du lien de confirmation. Après inscription, le site indique si le lien a été mis en file ; si le service est absent, le compte reste utilisable et aucun envoi n’est annoncé.
 - `/administration/demandes` affiche les demandes préparées par les clients connectés. L’équipe vérifie WhatsApp et confirme manuellement réception, expédition, livraison ou annulation. Dialogue de confirmation, version contre modifications concurrentes, état d’e-mail et erreurs réessayables. Aucun suivi transporteur ni API WhatsApp supposé.
-- Le compte client affiche ces statuts, avec la date de mise à jour. Les notifications se limitent aux adresses confirmées. Les réglages Gmail et la clé de chiffrement appartiennent uniquement à l’environnement backend ; aucun secret `NEXT_PUBLIC_*`.
+- Le compte client affiche ces statuts, avec la date de mise à jour. L’administrateur confirme le statut sans annoncer d’e-mail envoyé lorsque l’envoi est désactivé. Les notifications se limitent aux adresses confirmées. Les réglages Gmail et la clé de chiffrement appartiennent uniquement à l’environnement backend ; aucun secret `NEXT_PUBLIC_*`.
 - Les migrations backend doivent être appliquées avant déploiement des deux applications ; ne pas redéployer le conteneur PostgreSQL pour exécuter une migration.

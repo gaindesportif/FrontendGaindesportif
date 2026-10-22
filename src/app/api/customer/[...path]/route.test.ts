@@ -255,4 +255,20 @@ describe('BFF client, protections et projection', () => {
       ).status,
     ).toBe(503);
   });
+  it('expose seulement la capacité e-mail publique, sans cookie ni paramètre SMTP', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          response({ emailEnabled: false, SMTP_PASSWORD: 'private-never-public' }),
+        ),
+    );
+    const result = await GET(req('config'), context('config'));
+    expect(result.status).toBe(200);
+    expect(await result.json()).toEqual({ emailEnabled: false });
+    expect(result.headers.get('cache-control')).toContain('no-store');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+    expect((await GET(req('config'), context('config'))).status).toBe(503);
+  });
 });

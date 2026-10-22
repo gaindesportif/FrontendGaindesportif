@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 const id = '33333333-3333-4333-8333-333333333333';
-async function setup(page: Page) {
+async function setup(page: Page, mailConfigured = true) {
   let status = 'prepared',
     version = 0;
   let unavailable = false;
@@ -34,7 +34,9 @@ async function setup(page: Page) {
         });
       status = body.status;
       version++;
-      return route.fulfill({ json: { ok: true, notification: 'queued' } });
+      return route.fulfill({
+        json: { ok: true, notification: mailConfigured ? 'queued' : 'unconfigured' },
+      });
     }
     return route.fulfill({
       json: {
@@ -59,7 +61,7 @@ async function setup(page: Page) {
         ],
         total: 1,
         page: 1,
-        mailConfigured: true,
+        mailConfigured,
       },
     });
   });
@@ -115,4 +117,20 @@ test('demandes : panne réseau conservée dans la confirmation sans annoncer un 
   await expect(dialog.getByRole('alert')).toContainText('indisponible');
   await expect(page.getByRole('main').getByRole('status')).toHaveCount(0);
   await expect(dialog).toBeVisible();
+});
+
+test('demandes : suivi confirmé sans e-mail et sans demande de vérification client', async ({
+  page,
+}) => {
+  const mock = await setup(page, false);
+  await page.goto('/administration/demandes');
+  await page.getByRole('button', { name: 'Confirmer : demande reçue', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('Aucun e-mail ne sera envoyé');
+  await dialog.getByRole('button', { name: 'Confirmer le statut', exact: true }).click();
+  await expect(page.getByRole('main').getByRole('status')).toContainText('Aucun e-mail envoyé');
+  expect(mock.updates).toEqual([{ status: 'received', version: 0, confirmed: true }]);
+  await expect(
+    page.getByRole('button', { name: 'Confirmer : produit livré', exact: true }),
+  ).toBeVisible();
 });

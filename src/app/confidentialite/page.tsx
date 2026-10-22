@@ -30,9 +30,8 @@ export default function Privacy() {
         La création du compte utilise votre nom, votre adresse e-mail et un mot de passe. Le mot de
         passe est conservé sous une empreinte sécurisée, jamais en clair. Un cookie de session
         nécessaire au compte permet de rester connecté pendant 30 jours au maximum. Vous pouvez vous
-        déconnecter à tout moment. Des liens à usage unique sont envoyés pour confirmer votre
-        adresse (24 heures) ou réinitialiser votre mot de passe (30 minutes). Le nouveau mot de
-        passe n’est jamais envoyé par e-mail.
+        déconnecter à tout moment. L’envoi des e-mails et la récupération du mot de passe par e-mail
+        ne sont pas activés pour le moment.
       </p>
       <p>
         Vos favoris sont associés à votre compte pour les retrouver sur vos appareils. Si une
@@ -42,11 +41,9 @@ export default function Privacy() {
       </p>
       <h2>Les e-mails liés à votre compte</h2>
       <p>
-        Les messages de confirmation, de récupération et de suivi sont transmis via Gmail par Gaindé
-        Sportif. Votre adresse et le contenu du message sont donc traités par Google pour leur
-        acheminement. Les messages en attente sont chiffrés en base ; leur contenu est retiré après
-        envoi, échec définitif ou expiration. Un état technique est conservé au maximum 30 jours. Il
-        ne s’agit pas d’un abonnement publicitaire.
+        Aucun e-mail de confirmation, de récupération ou de suivi n’est envoyé actuellement. Le
+        fournisseur et les modalités de traitement seront précisés lors de l’activation de ce
+        service. Les demandes et leurs mises à jour restent consultables dans votre espace client.
       </p>
       <h2>Historique et demandes WhatsApp</h2>
       <p>
@@ -59,7 +56,7 @@ export default function Privacy() {
         L’ouverture de WhatsApp ne confirme ni l’envoi du message, ni une commande, ni un paiement.
         Vous choisissez vous-même d’envoyer le message dans WhatsApp. L’équipe peut ensuite
         confirmer manuellement la réception, l’expédition, la livraison ou l’annulation d’une
-        demande. Un e-mail de suivi est préparé si votre adresse est confirmée. Sans connexion à un
+        demande. Les notifications par e-mail sont désactivées pour le moment. Sans connexion à un
         compte, les consultations et demandes WhatsApp ne sont pas associées à un compte client par
         le site.
       </p>

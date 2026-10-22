@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { backendClientHeaders } from '@/lib/backend-request.server';
 import {
+  customerConfigSchema,
   customerHistorySchema,
   customerRequestsSchema,
   customerUserSchema,
@@ -16,6 +17,7 @@ const displayName = z.string().trim().min(2).max(100);
 const email = z.string().trim().toLowerCase().pipe(z.email().max(254));
 const emailToken = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 const rules: Array<{ pattern: RegExp; methods: string[]; public?: boolean }> = [
+  { pattern: /^config$/, methods: ['GET'], public: true },
   { pattern: /^auth\/(register|login|forgot|reset|verify)$/, methods: ['POST'], public: true },
   { pattern: /^auth\/me$/, methods: ['GET'] },
   { pattern: /^auth\/(logout|password|resend-verification)$/, methods: ['POST'] },
@@ -194,6 +196,7 @@ async function proxy(request: NextRequest, context: Context) {
     if (upstream.status === 204) {
       if (
         [
+          'config',
           'auth/login',
           'auth/register',
           'auth/forgot',
@@ -246,6 +249,7 @@ async function proxy(request: NextRequest, context: Context) {
       });
       return response;
     }
+    if (path === 'config') return json(customerConfigSchema.parse(data));
     if (path === 'auth/forgot') return json(z.object({ message: z.string().max(400) }).parse(data));
     if (path === 'auth/reset')
       return clearSession(json(z.object({ ok: z.literal(true) }).parse(data)));

@@ -36,7 +36,7 @@ export function AccountAuth({ mode }: { mode: Mode }) {
   useEffect(() => {
     queueMicrotask(() => setSearch(window.location.search));
   }, []);
-  const { user, status, refresh } = useCustomer();
+  const { user, status, refresh, emailEnabled } = useCustomer();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -55,6 +55,7 @@ export function AccountAuth({ mode }: { mode: Mode }) {
     setError('');
     try {
       const email = String(fields.get('email') || '').trim();
+      if (recover && !emailEnabled) return;
       if (recover) {
         const result = await customerFetch<{ message: string }>('auth/forgot', {
           method: 'POST',
@@ -72,9 +73,9 @@ export function AccountAuth({ mode }: { mode: Mode }) {
           }),
         });
         setMessage(
-          result.verificationQueued
+          result.verificationQueued && emailEnabled
             ? 'Votre compte est créé. Consultez votre boîte e-mail pour confirmer votre adresse.'
-            : 'Votre compte est créé. Vous pourrez confirmer votre adresse depuis votre profil lorsque le service e-mail sera disponible.',
+            : 'Votre compte est créé. Retrouvez dès maintenant vos favoris et vos demandes dans votre espace.',
         );
         await refresh();
         notifyCustomerChange();
@@ -149,6 +150,25 @@ export function AccountAuth({ mode }: { mode: Mode }) {
               >
                 Continuer
               </Link>
+            </section>
+          ) : recover && !emailEnabled ? (
+            <section>
+              <h1 className={styles.formTitle}>Mot de passe oublié</h1>
+              <p className={styles.notice}>
+                La récupération par e-mail n’est pas disponible pour le moment.
+              </p>
+              <p className={styles.description}>
+                Pour toute question concernant votre accès, contactez notre équipe. Votre mot de
+                passe reste nécessaire pour vous connecter.
+              </p>
+              <div className={styles.actions}>
+                <Link className={styles.primary} href="/contact">
+                  Contacter notre équipe
+                </Link>
+                <Link className={styles.textLink} href={linkedAuth('/compte/connexion', search)}>
+                  Retour à la connexion
+                </Link>
+              </div>
             </section>
           ) : user && status === 'authenticated' && !recover ? (
             <section>
@@ -252,7 +272,7 @@ export function AccountAuth({ mode }: { mode: Mode }) {
                         : 'Me connecter'}
                   <ArrowRight size={18} aria-hidden="true" />
                 </button>
-                {!register && !recover && (
+                {!register && !recover && emailEnabled && (
                   <Link
                     className={styles.textLink}
                     href={linkedAuth('/compte/recuperation', search)}
@@ -261,6 +281,14 @@ export function AccountAuth({ mode }: { mode: Mode }) {
                   </Link>
                 )}
               </form>
+              {!recover && !emailEnabled && (
+                <p className={styles.hint}>
+                  La récupération de mot de passe par e-mail n’est pas disponible pour le moment.{' '}
+                  <Link className={styles.textLink} href="/contact">
+                    Besoin d’aide ?
+                  </Link>
+                </p>
+              )}
               <p className={styles.formFooter}>
                 {register || recover ? 'Déjà un compte ? ' : 'Pas encore de compte ? '}
                 <Link

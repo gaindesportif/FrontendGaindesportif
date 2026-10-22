@@ -343,6 +343,7 @@ function WhatsappRequests({ userId }: { userId: string }) {
   );
 }
 function EmailVerification({ user }: { user: CustomerUser }) {
+  const { emailEnabled } = useCustomer();
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -369,6 +370,10 @@ function EmailVerification({ user }: { user: CustomerUser }) {
       setPending(false);
     }
   }
+  if (!emailEnabled)
+    return (
+      <p className={styles.hint}>Les e-mails liés au compte ne sont pas activés pour le moment.</p>
+    );
   return user.emailVerifiedAt ? (
     <p className={styles.hint}>Adresse e-mail confirmée.</p>
   ) : (
@@ -410,7 +415,6 @@ function Profile({ user }: { user: CustomerUser }) {
           body: JSON.stringify({ displayName: String(fields.get('displayName') || '').trim() }),
         });
         await refresh();
-        notifyCustomerChange();
         setSuccess('Votre nom a été mis à jour.');
       } else {
         await customerFetch(action === 'password' ? 'auth/password' : 'profile', {

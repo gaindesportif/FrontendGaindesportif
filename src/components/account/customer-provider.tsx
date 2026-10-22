@@ -14,11 +14,13 @@ import {
   customerError,
   customerFetch,
   customerUserSchema,
+  customerConfigSchema,
   type CustomerUser,
 } from '@/lib/customer-client';
 
 type CustomerState = {
   user: CustomerUser | null;
+  emailEnabled: boolean;
   status: 'loading' | 'anonymous' | 'authenticated' | 'error';
   error: string;
   refresh: () => Promise<void>;
@@ -32,6 +34,7 @@ export function useCustomer() {
 }
 
 export function CustomerProvider({ children }: { children: ReactNode }) {
+  const [emailEnabled, setEmailEnabled] = useState(false);
   const [user, setUser] = useState<CustomerUser | null>(null);
   const [status, setStatus] = useState<CustomerState['status']>('loading');
   const [error, setError] = useState('');
@@ -70,6 +73,13 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     channel.current?.postMessage('changed');
   }, [clear]);
   useEffect(() => {
+    const abort = new AbortController();
+    customerFetch<unknown>('config', { signal: abort.signal })
+      .then((value) => {
+        const result = customerConfigSchema.safeParse(value);
+        if (!abort.signal.aborted && result.success) setEmailEnabled(result.data.emailEnabled);
+      })
+      .catch(() => {});
     const initial = window.setTimeout(() => void refresh(), 0);
     function expired() {
       clear();
@@ -93,6 +103,7 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
       };
     }
     return () => {
+      abort.abort();
       revision.current += 1;
       window.clearTimeout(initial);
       window.removeEventListener('gainde-customer-expired', expired);
@@ -103,6 +114,8 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     };
   }, [clear, refresh]);
   return (
-    <Context.Provider value={{ user, status, error, refresh, logout }}>{children}</Context.Provider>
+    <Context.Provider value={{ user, status, error, refresh, logout, emailEnabled }}>
+      {children}
+    </Context.Provider>
   );
 }

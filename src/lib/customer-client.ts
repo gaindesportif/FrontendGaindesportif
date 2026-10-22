@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { publicProductSchema } from '@/lib/catalogue';
 
+export const customerConfigSchema = z.object({ emailEnabled: z.boolean() });
 export const customerUserSchema = z.object({
   id: z.uuid(),
   email: z.email().max(254),
@@ -82,6 +83,7 @@ export async function customerFetch<T>(path: string, init: RequestInit = {}): Pr
       startedRevision === sessionRevision &&
       response.status === 401 &&
       ![
+        'config',
         'auth/login',
         'auth/register',
         'auth/forgot',

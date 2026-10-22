@@ -80,7 +80,7 @@ export function AdminCustomerRequests() {
           ? 'Statut enregistré. L’e-mail est en attente d’envoi.'
           : result.notification === 'unverified'
             ? 'Statut enregistré. Aucun e-mail envoyé : le client doit confirmer son adresse.'
-            : 'Statut enregistré. Aucun e-mail envoyé : configurez d’abord le service e-mail.',
+            : 'Statut enregistré dans l’espace client. Aucun e-mail envoyé.',
       );
       setChoice(null);
       setRevision((v) => v + 1);
@@ -107,7 +107,9 @@ export function AdminCustomerRequests() {
         </button>
       </div>
       {data && !data.mailConfigured && (
-        <p className={styles.error}>L’envoi des e-mails n’est pas encore configuré.</p>
+        <p className={styles.hint}>
+          Les e-mails sont désactivés. Le suivi reste disponible dans l’espace client.
+        </p>
       )}
       {error && !choice && (
         <p role="alert" className={styles.error}>
@@ -129,7 +131,7 @@ export function AdminCustomerRequests() {
             <h2 className={styles.subtitle}>{entry.productName}</h2>
             <p>
               {entry.account.displayName} · {entry.account.email}
-              {!entry.account.emailVerifiedAt && ' · Adresse non confirmée'}
+              {data.mailConfigured && !entry.account.emailVerifiedAt && ' · Adresse non confirmée'}
             </p>
             <p>
               Quantité : {entry.quantity} · Prix unitaire affiché :{' '}
@@ -203,8 +205,9 @@ export function AdminCustomerRequests() {
               auprès de votre équipe.
             </p>
             <p>
-              Cette action enregistrera le statut et préparera un e-mail si l’adresse du client est
-              confirmée et le service configuré.
+              {data?.mailConfigured
+                ? 'Cette action enregistrera le statut et préparera un e-mail si l’adresse du client est confirmée.'
+                : 'Cette action enregistrera le statut dans l’espace client. Aucun e-mail ne sera envoyé.'}
             </p>
             {error && (
               <p role="alert" className={styles.error}>
@@ -220,7 +223,11 @@ export function AdminCustomerRequests() {
                 Annuler
               </button>
               <button className={styles.button} disabled={pending} onClick={() => void confirm()}>
-                {pending ? 'Enregistrement…' : 'Confirmer et informer le client'}
+                {pending
+                  ? 'Enregistrement…'
+                  : data?.mailConfigured
+                    ? 'Confirmer et informer le client'
+                    : 'Confirmer le statut'}
               </button>
             </div>
           </>
