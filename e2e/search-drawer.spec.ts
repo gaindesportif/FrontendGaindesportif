@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 
 // Produits synthétiques, injectés uniquement dans les réponses du navigateur de recette.
@@ -8,7 +8,8 @@ function product(index = 1) {
     slug: `produit-recherche-test-${index}`,
     name: `Produit de recette technique ${index}`,
     description: 'Produit synthétique de recette locale, sans publication commerciale.',
-    category: 'senegal',
+    category: 'maillots',
+    stockQuantity: 100,
     priceXof: 10000 + index,
     sizes: ['M', 'L'],
     colors: ['Vert'],
@@ -191,19 +192,19 @@ test('recherche : une suggestion ouvre la bonne catégorie de la boutique', asyn
   });
   await page.goto('/a-propos');
   const dialog = await openSearch(page);
-  const suggestion = dialog.getByRole('link', { name: 'Sénégal', exact: true });
-  await expect(suggestion).toHaveAttribute('href', '/boutique?category=senegal');
+  const suggestion = dialog.getByRole('link', { name: 'Maillots', exact: true });
+  await expect(suggestion).toHaveAttribute('href', '/boutique?category=maillots');
   await suggestion.click();
   await expect(page).toHaveURL(
-    (url) => url.pathname === '/boutique' && url.searchParams.get('category') === 'senegal',
+    (url) => url.pathname === '/boutique' && url.searchParams.get('category') === 'maillots',
   );
   await expect(dialog).not.toBeVisible();
   await expect(
     page
       .getByRole('group', { name: 'Catégories de la boutique', exact: true })
-      .getByRole('button', { name: 'Sénégal', exact: true }),
+      .getByRole('button', { name: 'Maillots', exact: true }),
   ).toHaveAttribute('aria-pressed', 'true');
-  await expect.poll(() => queries.at(-1)?.get('category')).toBe('senegal');
+  await expect.poll(() => queries.at(-1)?.get('category')).toBe('maillots');
 });
 
 test('recherche : chargement, panne, reprise et résultats vides sont distincts', async ({

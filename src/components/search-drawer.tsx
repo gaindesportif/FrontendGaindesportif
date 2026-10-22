@@ -1,10 +1,11 @@
 'use client';
+import { useCategories } from '@/components/catalogue/categories-provider';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent, type RefObject } from 'react';
 import { ArrowRight, Search, X } from 'lucide-react';
-import { catalogueCategories, catalogueResponseSchema } from '@/lib/catalogue';
+import { catalogueResponseSchema } from '@/lib/catalogue';
 import { Dialog } from './dialog';
 import { CatalogueCard } from './catalogue/catalogue-card';
 import { useCatalogueResource } from './catalogue/use-catalogue-resource';
@@ -43,6 +44,7 @@ function SearchContent({
   onClose: () => void;
   inputRef: RefObject<HTMLInputElement | null>;
 }) {
+  const { categories } = useCategories();
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [term, setTerm] = useState(initialQuery.trim());
@@ -102,7 +104,7 @@ function SearchContent({
         <section className={styles.suggestions} aria-labelledby="search-suggestions-title">
           <h2 id="search-suggestions-title">À découvrir</h2>
           <div>
-            {catalogueCategories.map((category) => (
+            {categories.map((category) => (
               <Link
                 key={category.value}
                 href={`/boutique?category=${category.value}`}

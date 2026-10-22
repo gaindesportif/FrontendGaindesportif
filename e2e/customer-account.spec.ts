@@ -1,4 +1,4 @@
-import { test, expect, type Page, type Route } from '@playwright/test';
+import { test, expect, type Page, type Route } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 
 // Comptes, données et mots de passe synthétiques : aucun appel à la base ni envoi d’email.
@@ -23,7 +23,8 @@ const product = {
   slug: 'article-recette-compte',
   name: 'Article de recette du compte',
   description: 'Donnée synthétique réservée à la recette automatisée locale.',
-  category: 'senegal',
+  category: 'maillots',
+  stockQuantity: 100,
   priceXof: 10000,
   sizes: [],
   colors: [],

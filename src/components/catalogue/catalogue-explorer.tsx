@@ -1,9 +1,10 @@
 'use client';
+import { useCategories } from '@/components/catalogue/categories-provider';
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ArrowDown, ArrowLeft, ArrowRight, X } from 'lucide-react';
-import { catalogueCategories, catalogueResponseSchema } from '@/lib/catalogue';
+import { catalogueResponseSchema } from '@/lib/catalogue';
 import { useCatalogueResource } from './use-catalogue-resource';
 import { CatalogueState } from './catalogue-state';
 import { CatalogueCard } from './catalogue-card';
@@ -16,6 +17,7 @@ export function CatalogueExplorer({
   query: string;
   category: string;
 }) {
+  const { categories, error: categoryError, reload: reloadCategories } = useCategories();
   const router = useRouter();
   const [page, setPage] = useState(1);
   const query = new URLSearchParams({ page: String(page) });
@@ -53,7 +55,7 @@ export function CatalogueExplorer({
         </p>
       </div>
       <div className={styles.categoryTabs} role="group" aria-label="Catégories de la boutique">
-        {[{ value: '', label: 'Toutes les catégories' }, ...catalogueCategories].map((item) => (
+        {[{ value: '', label: 'Toutes les catégories' }, ...categories].map((item) => (
           <button
             key={item.value}
             type="button"
@@ -64,6 +66,14 @@ export function CatalogueExplorer({
           </button>
         ))}
       </div>
+      {categoryError && (
+        <p role="status">
+          Les catégories n’ont pas pu être actualisées.{' '}
+          <button type="button" onClick={() => void reloadCategories()}>
+            Actualiser les catégories
+          </button>
+        </p>
+      )}
       <div className={styles.toolbar}>
         <span role="status" aria-live="polite">
           {resource.state === 'loading'

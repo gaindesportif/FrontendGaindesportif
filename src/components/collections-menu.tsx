@@ -1,19 +1,16 @@
 'use client';
+import { useCategories } from '@/components/catalogue/categories-provider';
 
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
-import {
-  catalogueCategories,
-  catalogueCategoryLabel,
-  catalogueResponseSchema,
-  formatXof,
-} from '@/lib/catalogue';
+import { catalogueCategoryLabel, catalogueResponseSchema, formatXof } from '@/lib/catalogue';
 import { CatalogueImage } from './catalogue/catalogue-image';
 import { useCatalogueResource } from './catalogue/use-catalogue-resource';
 import styles from './collections-menu.module.css';
 
 // Mounted only while the disclosure is open: every opening reads current publications.
 export function CollectionsMenuContent({ onNavigate }: { onNavigate: () => void }) {
+  const { categories } = useCategories();
   const { resource, retry } = useCatalogueResource(
     '/api/catalogue?page=1',
     catalogueResponseSchema.parse,
@@ -31,7 +28,7 @@ export function CollectionsMenuContent({ onNavigate }: { onNavigate: () => void 
           Tous les produits <ArrowUpRight size={16} aria-hidden="true" />
         </Link>
         <ul>
-          {catalogueCategories.map((category) => (
+          {categories.map((category) => (
             <li key={category.value}>
               <Link href={`/boutique?category=${category.value}`} onClick={onNavigate}>
                 {category.label}
@@ -92,7 +89,7 @@ export function CollectionsMenuContent({ onNavigate }: { onNavigate: () => void 
                     )}
                   </div>
                   <span className={styles.category}>
-                    {catalogueCategoryLabel(product.category)}
+                    {product.categoryLabel || catalogueCategoryLabel(product.category)}
                   </span>
                   <strong>
                     {product.name} <ArrowUpRight size={16} aria-hidden="true" />

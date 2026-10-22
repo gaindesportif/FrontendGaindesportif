@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 
 test('accueil, boutique unique, anciennes collections et navigation mobile', async ({
@@ -13,8 +13,8 @@ test('accueil, boutique unique, anciennes collections et navigation mobile', asy
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('LA FIERTÉ');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.goto('/collections?category=senegal');
-  await expect(page).toHaveURL(/\/boutique\?category=senegal$/);
+  await page.goto('/collections?category=maillots');
+  await expect(page).toHaveURL(/\/boutique\?category=maillots$/);
   await expect(
     page.getByRole('heading', { name: 'Aucun produit pour cette recherche.' }),
   ).toBeVisible();
@@ -52,8 +52,8 @@ test('recherche et états vides', async ({ page }) => {
   await expect(
     page.getByRole('heading', { name: 'Aucun produit pour cette recherche.' }),
   ).toBeVisible();
-  await page.goto('/collections?category=dakar&q=zzzz');
-  await expect(page).toHaveURL(/\/boutique\?category=dakar&q=zzzz$/);
+  await page.goto('/collections?category=t-shirts-polos&q=zzzz');
+  await expect(page).toHaveURL(/\/boutique\?category=t-shirts-polos&q=zzzz$/);
   await expect(page.getByRole('button', { name: 'Rechercher', exact: true })).toHaveCount(1);
   await expect(page.getByRole('searchbox')).toHaveCount(0);
 });

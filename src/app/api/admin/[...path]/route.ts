@@ -13,6 +13,7 @@ const allowedRoutes: Array<[RegExp, readonly string[]]> = [
   [new RegExp(`^customer-requests/${ID}/status$`), ['PATCH']],
   [new RegExp(`^accounts/${ID}$`), ['PATCH']],
   [/^products$/, ['GET', 'POST']],
+  [/^categories$/, ['GET', 'POST']],
   [new RegExp(`^products/${ID}$`), ['GET', 'PATCH', 'DELETE']],
   [/^media\/config$/, ['GET']],
   [new RegExp(`^products/${ID}/media/upload-signature$`), ['POST']],
@@ -55,6 +56,8 @@ function errorMessage(status: number, path: string): string {
       : 'Votre session a expiré. Reconnectez-vous.';
   if (status === 403) return 'Ce compte n’est pas autorisé à effectuer cette action.';
   if (status === 404) return 'Cet élément n’existe plus ou n’est pas accessible.';
+  if (status === 409 && path === 'categories')
+    return 'Cette catégorie existe déjà. Sélectionnez-la dans la liste.';
   if (status === 409)
     return 'Cette modification est impossible dans l’état actuel. Vérifiez les données et rechargez.';
   if (status === 429) return 'Trop de tentatives. Patientez avant de réessayer.';
@@ -62,11 +65,12 @@ function errorMessage(status: number, path: string): string {
     if (path === 'auth/login') return 'Vérifiez l’identifiant et le mot de passe.';
     if (path === 'auth/password')
       return 'Vérifiez le mot de passe actuel et le nouveau mot de passe (12 caractères minimum).';
+    if (path === 'categories') return 'Renseignez un nom de catégorie valide (2 à 80 caractères).';
     if (path.startsWith('accounts'))
       return 'Vérifiez l’identifiant, le nom et le mot de passe (12 caractères minimum).';
     if (path.includes('media/'))
       return 'Vérifiez le type, la taille et les informations du média, puis réessayez.';
-    return 'Vérifiez les champs. Pour publier, ajoutez un prix positif et au moins une photo.';
+    return 'Vérifiez les champs. Pour publier, renseignez le prix, le stock, la catégorie et au moins une photo.';
   }
   if (path.includes('media/'))
     return 'Les médias sont indisponibles. Vous pouvez conserver le produit en brouillon et réessayer plus tard.';

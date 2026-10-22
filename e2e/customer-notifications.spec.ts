@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 const id = '33333333-3333-4333-8333-333333333333';
 async function setup(page: Page, mailConfigured = true) {

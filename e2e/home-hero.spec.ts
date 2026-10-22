@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 
 test('scène 3D : univers, liens réels, pause et interactions', async ({ page, isMobile }) => {
@@ -16,7 +16,7 @@ test('scène 3D : univers, liens réels, pause et interactions', async ({ page, 
   ).toBeVisible();
   await expect(
     scene.getByRole('link', { name: 'Découvrir la collection Sénégal' }),
-  ).toHaveAttribute('href', '/boutique?category=senegal');
+  ).toHaveAttribute('href', '/boutique');
   await page.getByRole('button', { name: 'Voir l’univers Accessoires' }).click();
   await expect(scene).toHaveAttribute('data-universe', 'accessoires');
   const pause = scene.getByRole('button', {
@@ -131,7 +131,7 @@ test('sans JavaScript : titre, emblème et liens restent disponibles', async ({ 
   ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Découvrir la collection Dakar' })).toHaveAttribute(
     'href',
-    '/boutique?category=dakar',
+    '/boutique',
   );
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await context.close();

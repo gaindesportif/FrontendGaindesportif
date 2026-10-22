@@ -1,4 +1,5 @@
 'use client';
+import { useCategories } from '@/components/catalogue/categories-provider';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -6,11 +7,11 @@ import { usePathname } from 'next/navigation';
 import { ArrowUpRight, ChevronDown, Heart, Menu, Search, UserRound, X } from 'lucide-react';
 import { useStore } from './store-provider';
 import { Dialog } from './dialog';
-import { catalogueCategories } from '@/lib/catalogue';
 import { CollectionsMenuContent } from './collections-menu';
 import styles from './collections-menu.module.css';
 
 export function Header() {
+  const { categories } = useCategories();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const store = useStore();
@@ -190,7 +191,7 @@ export function Header() {
           </Link>
           <p className={styles.mobileCollectionLabel}>Les collections</p>
           <div className="mobile-sub-links">
-            {catalogueCategories.map((category) => (
+            {categories.map((category) => (
               <Link
                 key={category.value}
                 href={`/boutique?category=${category.value}`}

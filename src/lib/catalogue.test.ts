@@ -6,7 +6,8 @@ const product: PublicProduct = {
   slug: 'produit-test',
   name: 'Produit de test & couleurs',
   description: 'Données commerciales synthétiques réservées aux tests.',
-  category: 'senegal',
+  category: 'maillots',
+  stockQuantity: 100,
   priceXof: 10000,
   sizes: ['M', 'L'],
   colors: ['Vert'],
@@ -69,6 +70,37 @@ describe('catalogue commercial public', () => {
         'https://boutique.example',
       ),
     ).toBeNull();
+  });
+
+  it('borne le WhatsApp au stock réel, accepte les catégories personnalisées et inclut la photo', () => {
+    const small = {
+      ...product,
+      stockQuantity: 2,
+      category: 'gants-de-gardien',
+      categoryLabel: 'Gants de gardien',
+    };
+    expect(publicProductSchema.safeParse(small).success).toBe(true);
+    expect(
+      productWhatsappUrl(
+        small,
+        { quantity: 3, size: 'M', color: 'Vert' },
+        'https://boutique.example',
+      ),
+    ).toBeNull();
+    const message = new URL(
+      productWhatsappUrl(
+        small,
+        { quantity: 2, size: 'M', color: 'Vert' },
+        'https://boutique.example',
+      )!,
+    ).searchParams.get('text');
+    expect(message).toContain(`Photo du produit : ${product.media[0].url}`);
+    for (const stockQuantity of [-1, 1.5, null])
+      expect(publicProductSchema.safeParse({ ...product, stockQuantity }).success).toBe(false);
+    expect(
+      publicProductSchema.safeParse({ ...product, media: [{ ...product.media[0], type: 'video' }] })
+        .success,
+    ).toBe(false);
   });
 
   it('refuse les brouillons, médias externes, prix absents et retire les champs internes', () => {

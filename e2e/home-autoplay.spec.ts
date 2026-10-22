@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.beforeEach(async ({ page }) => {
   // Ici, tester les temporisations sans mélanger l'horloge simulée et la boucle GPU.

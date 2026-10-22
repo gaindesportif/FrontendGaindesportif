@@ -2,13 +2,12 @@
 
 import Link from 'next/link';
 import { useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowUpRight, ImageOff, MessageCircle, Minus, Play, Plus } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, MessageCircle, Minus, Plus } from 'lucide-react';
 import {
   catalogueCategoryLabel,
   formatXof,
   productWhatsappUrl,
   publicProductSchema,
-  type PublicMedia,
   type PublicProduct,
 } from '@/lib/catalogue';
 import { useCatalogueResource } from './use-catalogue-resource';
@@ -20,27 +19,6 @@ import { CustomerProductActivity } from './customer-product-activity';
 import { useCustomer } from '@/components/account/customer-provider';
 import { customerFetch } from '@/lib/customer-client';
 
-function ProductVideo({ media }: { media: PublicMedia }) {
-  const [failed, setFailed] = useState(false);
-  if (failed)
-    return (
-      <div className={styles.mediaError} role="status">
-        <ImageOff size={24} aria-hidden="true" />
-        <p>La vidéo ne peut pas être lue. Vérifiez votre connexion ou choisissez une photo.</p>
-      </div>
-    );
-  return (
-    <video
-      src={media.url}
-      controls
-      playsInline
-      preload="metadata"
-      aria-label={media.alt || 'Vidéo du produit'}
-      onError={() => setFailed(true)}
-    />
-  );
-}
-
 function ProductGallery({ product }: { product: PublicProduct }) {
   const media = [...product.media].sort((a, b) => a.position - b.position);
   const [selectedId, setSelectedId] = useState(media[0].id);
@@ -48,43 +26,31 @@ function ProductGallery({ product }: { product: PublicProduct }) {
   return (
     <div className={styles.gallery} role="group" aria-label="Galerie du produit">
       <div className={styles.mainMedia}>
-        {selected.type === 'image' ? (
-          <CatalogueImage
-            key={selected.id}
-            media={{ ...selected, alt: selected.alt || product.name }}
-            sizes="(max-width: 650px) 90vw, 50vw"
-            priority
-          />
-        ) : (
-          <ProductVideo key={selected.id} media={selected} />
-        )}
+        <CatalogueImage
+          key={selected.id}
+          media={{ ...selected, alt: selected.alt || product.name }}
+          sizes="(max-width:650px) 90vw,50vw"
+          priority
+        />
       </div>
       {media.length > 1 && (
-        <div className={styles.thumbnails} role="group" aria-label="Choisir une photo ou une vidéo">
+        <div className={styles.thumbnails} role="group" aria-label="Choisir une photo">
           {media.map((item, index) => (
             <button
               type="button"
               key={item.id}
               className={styles.thumbnail}
               aria-pressed={item.id === selected.id}
-              aria-label={`Voir ${item.type === 'image' ? 'la photo' : 'la vidéo'} ${index + 1}${item.alt ? ` : ${item.alt}` : ''}`}
+              aria-label={`Voir la photo ${index + 1}${item.alt ? ` : ${item.alt}` : ''}`}
               onClick={() => setSelectedId(item.id)}
             >
-              {item.type === 'image' ? (
-                <CatalogueImage media={{ ...item, alt: '' }} sizes="74px" />
-              ) : (
-                <>
-                  <Play size={20} aria-hidden="true" />
-                  <span>Vidéo</span>
-                </>
-              )}
+              <CatalogueImage media={{ ...item, alt: '' }} sizes="74px" />
             </button>
           ))}
         </div>
       )}
       <p className={styles.caption} aria-live="polite">
-        {selected.type === 'image' ? 'Photo' : 'Vidéo'} {media.indexOf(selected) + 1} sur{' '}
-        {media.length}
+        Photo {media.indexOf(selected) + 1} sur {media.length}
         {selected.alt ? ` · ${selected.alt}` : ''}
       </p>
     </div>
@@ -102,8 +68,9 @@ function ProductRequest({ product }: { product: PublicProduct }) {
   const [color, setColor] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [origin] = useState(() => (typeof window === 'undefined' ? '' : window.location.origin));
+  const maximum = Math.min(99, product.stockQuantity);
   const amount = Number(quantity);
-  const validQuantity = Number.isInteger(amount) && amount >= 1 && amount <= 99;
+  const validQuantity = Number.isInteger(amount) && amount >= 1 && amount <= maximum;
   // L'URL publique courante est obtenue après hydratation ; aucun secret de configuration exposé.
   const whatsapp = origin
     ? productWhatsappUrl(product, { quantity: amount, size, color }, origin)
@@ -136,11 +103,11 @@ function ProductRequest({ product }: { product: PublicProduct }) {
           );
       });
   }
-  if (product.availability === 'unavailable')
+  if (product.stockQuantity === 0 || product.availability === 'unavailable')
     return (
       <div className={styles.order}>
         <p>
-          <strong>Indisponible actuellement.</strong>
+          <strong>Rupture de stock.</strong>
         </p>
         <p>Ce produit ne peut pas faire l’objet d’une demande de commande pour le moment.</p>
         <Link href="/boutique" className={styles.textLink}>
@@ -197,7 +164,7 @@ function ProductRequest({ product }: { product: PublicProduct }) {
             id="product-quantity"
             type="number"
             min="1"
-            max="99"
+            max={maximum}
             step="1"
             inputMode="numeric"
             value={quantity}
@@ -208,7 +175,7 @@ function ProductRequest({ product }: { product: PublicProduct }) {
           <button
             type="button"
             aria-label="Augmenter la quantité"
-            disabled={!validQuantity || amount >= 99}
+            disabled={!validQuantity || amount >= maximum}
             onClick={() => setQuantity(String(amount + 1))}
           >
             <Plus size={16} aria-hidden="true" />
@@ -218,7 +185,7 @@ function ProductRequest({ product }: { product: PublicProduct }) {
       <div className={styles.order}>
         {!validQuantity && (
           <p className={styles.hint} id="quantity-error" role="status">
-            Choisissez une quantité entière de 1 à 99.
+            Choisissez une quantité entière de 1 à {maximum}.
           </p>
         )}
         {missingOptions && (
@@ -305,7 +272,7 @@ export function CatalogueProduct({ slug }: { slug: string }) {
           <div className={styles.productInfo}>
             <header>
               <Link href="/boutique" className={styles.category}>
-                {catalogueCategoryLabel(resource.data.category)}{' '}
+                {resource.data.categoryLabel || catalogueCategoryLabel(resource.data.category)}{' '}
                 <ArrowUpRight size={12} className="inline" aria-hidden="true" />
               </Link>
               <h1 id="product-title" className={styles.productTitle}>
@@ -318,11 +285,9 @@ export function CatalogueProduct({ slug }: { slug: string }) {
               <p className={styles.description}>{resource.data.description}</p>
             )}
             <p className="small">
-              {resource.data.availability === 'available'
-                ? 'Disponible'
-                : resource.data.availability === 'on_request'
-                  ? 'Disponibilité à confirmer avec notre équipe'
-                  : 'Indisponible actuellement'}
+              {resource.data.stockQuantity === 0
+                ? 'Rupture de stock'
+                : `${resource.data.stockQuantity} article${resource.data.stockQuantity > 1 ? 's' : ''} en stock au total`}
             </p>
             <SaveProductButton product={resource.data} showLabel />
             <ProductRequest

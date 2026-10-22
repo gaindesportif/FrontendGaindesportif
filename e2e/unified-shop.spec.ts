@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 
 // Publications synthétiques interceptées dans le navigateur, jamais insérées dans Neon.
@@ -8,6 +8,7 @@ const product = {
   name: 'Produit de recette publié',
   description: 'Donnée synthétique réservée au contrôle de la boutique unique.',
   category: 'accessoires',
+  stockQuantity: 100,
   priceXof: 12000,
   sizes: [],
   colors: [],
@@ -51,8 +52,8 @@ test('collections : même boutique, une recherche et catégories conservées', a
     await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
     const mobile = page.getByRole('navigation', { name: 'Navigation mobile' });
     await expect(mobile.getByRole('link', { name: 'La boutique', exact: true })).toHaveCount(1);
-    await mobile.getByRole('link', { name: 'Sénégal', exact: true }).click();
-    await expect(page).toHaveURL(/\/boutique\?category=senegal$/);
+    await mobile.getByRole('link', { name: 'Maillots', exact: true }).click();
+    await expect(page).toHaveURL(/\/boutique\?category=maillots$/);
   } else {
     const trigger = page.getByRole('button', { name: 'Les collections', exact: true });
     await trigger.focus();
@@ -70,8 +71,8 @@ test('collections : même boutique, une recherche et catégories conservées', a
     await expect(menu).toHaveCount(0);
     await expect(trigger).toBeFocused();
     await trigger.hover();
-    await menu.getByRole('link', { name: 'Sénégal', exact: true }).click();
-    await expect(page).toHaveURL(/\/boutique\?category=senegal$/);
+    await menu.getByRole('link', { name: 'Maillots', exact: true }).click();
+    await expect(page).toHaveURL(/\/boutique\?category=maillots$/);
     await expect(menu).toHaveCount(0);
   }
 });

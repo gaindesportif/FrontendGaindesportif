@@ -194,7 +194,7 @@ export function HeroScene() {
         <div className={styles.collectionHighlight}>
           <Link
             className={styles.lookCard}
-            href={`/boutique?category=${universe.id}`}
+            href={universe.id === 'accessoires' ? '/boutique?category=accessoires' : '/boutique'}
             aria-label={`Voir les pièces ${universe.label}`}
           >
             <span className={styles.lookPhoto} key={universe.id}>
@@ -213,7 +213,7 @@ export function HeroScene() {
               0{selected + 1} / {universe.label}
             </span>
             <Link
-              href={`/boutique?category=${universe.id}`}
+              href={universe.id === 'accessoires' ? '/boutique?category=accessoires' : '/boutique'}
               aria-label={`Découvrir la collection ${universe.label}`}
             >
               {universe.title} <ArrowUpRight size={20} />

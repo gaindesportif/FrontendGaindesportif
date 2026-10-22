@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { catalogueCategories } from '@/lib/catalogue';
+import { categorySlugSchema } from '@/lib/catalogue';
 import { CatalogueExplorer } from '@/components/catalogue/catalogue-explorer';
 
 export const metadata: Metadata = {
@@ -16,8 +16,7 @@ export default async function BoutiquePage({
   const params = await searchParams;
   const query = typeof params.q === 'string' ? params.q.trim().slice(0, 100) : '';
   const category =
-    typeof params.category === 'string' &&
-    catalogueCategories.some((item) => item.value === params.category)
+    typeof params.category === 'string' && categorySlugSchema.safeParse(params.category).success
       ? params.category
       : '';
   return (

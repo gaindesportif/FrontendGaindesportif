@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.beforeEach(async ({ page }) => {
   // Ici seul le texte est testé, le moteur graphique a sa propre suite.

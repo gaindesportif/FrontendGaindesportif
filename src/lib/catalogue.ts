@@ -2,13 +2,24 @@ import { z } from 'zod';
 import { contactDetails } from '@/lib/contact';
 
 export const catalogueCategories = [
-  { value: 'senegal', label: 'Sénégal' },
-  { value: 'dakar', label: 'Dakar' },
+  { value: 'maillots', label: 'Maillots' },
+  { value: 't-shirts-polos', label: 'T-shirts et polos' },
+  { value: 'shorts', label: 'Shorts' },
+  { value: 'survetements', label: 'Survêtements' },
+  { value: 'chaussures', label: 'Chaussures' },
   { value: 'accessoires', label: 'Accessoires' },
   { value: 'equipements', label: 'Équipements' },
-  { value: 'personnalisation', label: 'Personnalisation' },
-  { value: 'merchandising', label: 'Produits dérivés' },
-] as const;
+];
+export const categorySlugSchema = z
+  .string()
+  .min(1)
+  .max(80)
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+export const categoriesResponseSchema = z.object({
+  items: z
+    .array(z.object({ value: categorySlugSchema, label: z.string().min(2).max(80) }))
+    .max(200),
+});
 
 const cloudinaryUrl = z
   .url()
@@ -25,7 +36,7 @@ const cloudinaryUrl = z
 
 export const publicMediaSchema = z.object({
   id: z.string().min(1).max(200),
-  type: z.enum(['image', 'video']),
+  type: z.literal('image'),
   url: cloudinaryUrl,
   alt: z.string().max(500),
   position: z.number().int().nonnegative(),
@@ -41,14 +52,9 @@ export const publicProductSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   name: z.string().min(2).max(160),
   description: z.string().max(5000),
-  category: z.enum([
-    'senegal',
-    'dakar',
-    'accessoires',
-    'equipements',
-    'personnalisation',
-    'merchandising',
-  ]),
+  category: categorySlugSchema,
+  categoryLabel: z.string().max(80).optional(),
+  stockQuantity: z.number().int().min(0).max(2147483647),
   priceXof: z.number().int().positive(),
   sizes: z.array(z.string().min(1).max(60)).max(30),
   colors: z.array(z.string().min(1).max(60)).max(30),
@@ -57,7 +63,7 @@ export const publicProductSchema = z.object({
   media: z
     .array(publicMediaSchema)
     .min(1)
-    .max(8)
+    .max(5)
     .refine((items) => items.some((item) => item.type === 'image')),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -91,7 +97,7 @@ export function productWhatsappUrl(
     product.availability === 'unavailable' ||
     !Number.isInteger(selection.quantity) ||
     selection.quantity < 1 ||
-    selection.quantity > 99 ||
+    selection.quantity > Math.min(99, product.stockQuantity) ||
     (product.sizes.length > 0 && !product.sizes.includes(selection.size)) ||
     (product.colors.length > 0 && !product.colors.includes(selection.color))
   )
@@ -107,6 +113,7 @@ export function productWhatsappUrl(
     ...(product.colors.length ? [`Couleur : ${selection.color}`] : []),
     `Sous-total produits : ${formatXof(product.priceXof * selection.quantity)}`,
     `Fiche produit : ${productUrl.href}`,
+    `Photo du produit : ${product.media.find((media) => media.type === 'image')!.url}`,
     'Merci de confirmer la disponibilité, le règlement et la livraison ou le retrait.',
   ];
   const whatsapp = new URL(contactDetails.whatsapp);

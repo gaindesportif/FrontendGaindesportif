@@ -19,14 +19,14 @@ describe('proxy public de la boutique', () => {
     vi.stubGlobal('fetch', fetchMock);
     const response = await GET(
       new NextRequest(
-        'http://localhost:3000/api/catalogue?page=2&q=maillot&category=senegal&status=draft&token=never-relay',
+        'http://localhost:3000/api/catalogue?page=2&q=maillot&category=maillots&status=draft&token=never-relay',
       ),
     );
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');
     const [url, options] = fetchMock.mock.calls[0];
     expect(url).toBe(
-      'http://localhost:4000/api/v1/products?pageSize=24&page=2&q=maillot&category=senegal',
+      'http://localhost:4000/api/v1/products?pageSize=24&page=2&q=maillot&category=maillots',
     );
     expect(options.cache).toBe('no-store');
     expect(options.redirect).toBe('error');

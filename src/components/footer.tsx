@@ -23,11 +23,11 @@ export function Footer() {
             <Link href="/boutique">
               La boutique <ArrowUpRight size={13} />
             </Link>
-            <Link href="/boutique?category=senegal">
-              Sénégal <ArrowUpRight size={13} />
+            <Link href="/boutique?category=maillots">
+              Maillots <ArrowUpRight size={13} />
             </Link>
-            <Link href="/boutique?category=dakar">
-              Dakar <ArrowUpRight size={13} />
+            <Link href="/boutique?category=t-shirts-polos">
+              T-shirts et polos <ArrowUpRight size={13} />
             </Link>
             <Link href="/boutique?category=accessoires">
               Accessoires <ArrowUpRight size={13} />

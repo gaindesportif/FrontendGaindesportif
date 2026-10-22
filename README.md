@@ -4,7 +4,7 @@ Next.js 16, React 19, TypeScript strict et Tailwind CSS 4. Application mobile pr
 
 ## Boutique et gestion privée — préparation locale du 20/10/2026
 
-`/boutique` est l’unique catalogue : produits réellement publiés dans Nest ; `/boutique/[slug]` présente leur prix en XOF, leurs détails et leur galerie photos/vidéos. La demande d'achat ouvre WhatsApp avec le produit et les options choisis. Aucun paiement ou enregistrement de commande n'est annoncé par cette action. Les anciennes URL `/collections` redirigent vers cette boutique en conservant catégorie et recherche valides. Le menu Collections présente les dernières publications et les catégories du même catalogue, sans anciennes annonces statiques.
+`/boutique` est l’unique catalogue : produits réellement publiés dans Nest ; `/boutique/[slug]` présente leur prix en XOF, leurs détails et leur galerie de photos. La demande d'achat ouvre WhatsApp avec le produit et les options choisis. Aucun paiement ou enregistrement de commande n'est annoncé par cette action. Les anciennes URL `/collections` redirigent vers cette boutique en conservant catégorie et recherche valides. Le menu Collections présente les dernières publications et les catégories du même catalogue, sans anciennes annonces statiques.
 
 La sélection de produits de l’accueil utilise le même catalogue public, avec quatre publications récentes au maximum et les catégories gérées par l’équipe. Elle affiche les prix et les liens vers les fiches ; aucun produit statique ne remplace un catalogue vide ou inaccessible. Un brouillon reste privé ; un retrait disparaît à la prochaine lecture. Les visuels de marque du hero restent éditoriaux.
 
@@ -14,15 +14,25 @@ L'équipe dispose de `/administration` pour les brouillons, la publication et la
 
 Les appels privés passent par `/api/admin/*` : session en cookie HttpOnly, vérification d'origine sur les modifications et absence de cache. Les pages publiques et le navigateur ne reçoivent jamais le secret Cloudinary ou le jeton de session backend.
 
-Les fichiers produit partent directement du navigateur vers Cloudinary après autorisation signée par Nest, puis vérification côté backend. Images et vidéos sont servies directement par Cloudinary ; les composants Image de ces produits utilisent `unoptimized` pour éviter le cache disque Next. Le VPS conserve uniquement les métadonnées en PostgreSQL. Les médias éditoriaux fournis dans `public/images` sont conservés.
+Les fichiers produit partent directement du navigateur vers Cloudinary après autorisation signée par Nest, puis vérification côté backend. Les photos sont servies directement par Cloudinary ; les composants Image de ces produits utilisent `unoptimized` pour éviter le cache disque Next. Le VPS conserve uniquement les métadonnées en PostgreSQL. Les médias éditoriaux fournis dans `public/images` sont conservés.
 
-L’import permet de choisir jusqu’à cinq images en une fois, dans la limite de cinq photos par produit et 10 Mio par image. Le lot est validé avant tout envoi, puis chaque image est envoyée et vérifiée séparément avec un compteur de progression. En cas d’erreur, les photos confirmées restent disponibles et le lot s’arrête ; vérifier ou retirer l’envoi en attente avant de sélectionner les images restantes. Les deux vidéos autorisées se chargent une par une. Le backend compte aussi les tickets en attente pour imposer le plafond de cinq photos malgré des demandes concurrentes.
+L’import permet de choisir jusqu’à cinq images en une fois, dans la limite de cinq photos par produit et 10 Mio par image. Le lot est validé avant tout envoi, puis chaque image est envoyée et vérifiée séparément avec un compteur de progression. En cas d’erreur, les photos confirmées restent disponibles et le lot s’arrête ; vérifier ou retirer l’envoi en attente avant de sélectionner les images restantes. L’import vidéo et les lecteurs vidéo produit sont retirés ; les anciens fichiers ne sont pas supprimés automatiquement et restent retirables par l’administrateur. Le backend compte aussi les tickets en attente pour imposer le plafond de cinq photos malgré des demandes concurrentes.
 
 La suppression retire d'abord l'annonce du catalogue public. Nest conserve une tâche durable jusqu'au nettoyage confirmé des médias Cloudinary, avec reprise en cas de panne et purge après expiration des autorisations d'upload. L'interface distingue retrait de l'annonce et nettoyage en attente. Une absence de configuration Cloudinary produit une erreur explicite ; aucun upload réel n'est simulé. Configuration du backend local et recette réelle d’un PNG/WebM avec suppression vérifiées le 20/10/2026 ; aucun fichier de test laissé dans Cloudinary. Cela n’active pas automatiquement la configuration du backend déjà publié sur le VPS.
 
 La prochaine cible déclarée par l'utilisateur est le frontend sur le VPS existant avec `gaindesportif.com`. Voir `docs/DEPLOIEMENT.md` ; cette préparation locale ne constitue pas un déploiement ni une configuration DNS.
 
 Références consultées pour les médias produit : [galeries et médias Shopify](https://help.shopify.com/en/manual/products/product-media/add-media), [upload signé Cloudinary](https://cloudinary.com/documentation/upload_images) et [suppression/invalidation Cloudinary](https://cloudinary.com/documentation/delete_assets). Aucun contenu commercial ou média de tiers copié.
+
+## Stock, catégories et aperçu — évolution du 22/10/2026
+
+L’admin renseigne le stock réel total (toutes tailles/couleurs confondues), choisit une catégorie par type ou crée sa propre catégorie. Sept types initiaux : Maillots, T-shirts et polos, Shorts, Survêtements, Chaussures, Accessoires, Équipements. Les catégories géographiques/personnalisation/produits dérivés ne figurent plus dans les filtres. Les univers éditoriaux de l’accueil restent distincts des catégories commerciales.
+
+Parcours : informations → **Continuer vers les photos** (préparation privée) → ajout de photos → **Publier le produit** → aperçu → **Confirmer la publication**. Le retour de l’aperçu conserve les champs. L’ouverture de l’aperçu ne publie rien. Une préparation peut être enregistrée sans publier. Les anciennes annonces incomplètes portent « À compléter — non visible » ; leur stock et catégorie doivent être renseignés avant remise en ligne. Les modifications de photos d’une annonce déjà publiée s’appliquent au fil des imports/retraits ; retirer l’annonce avant une révision privée complète.
+
+La fiche montre le stock, limite la quantité à ce stock (99 maximum par demande), et désactive la commande en rupture. L’équipe actualise le stock après une vente : ouvrir WhatsApp n’effectue aucune réservation. Le message préparé contient la fiche **et le lien de la photo**. La fiche possède ses propres métadonnées de partage ; WhatsApp décide de l’aperçu. Un lien `wa.me` ne peut pas joindre automatiquement un fichier photo et aucun envoi de message automatique n’est annoncé.
+
+La migration backend `20261022130000_stock_categories` doit précéder cette version. Les catégories viennent de l’API commune aux filtres, menus et administration. Les médias produit sont des photos uniquement ; aucun secret n’est envoyé au navigateur. Production et validation manager restent distinctes de cette implémentation locale.
 
 ## Démarrer en local
 

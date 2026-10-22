@@ -13,15 +13,6 @@ export const adminStatusLabels = {
   published: 'Publié',
   deleting: 'Suppression en attente',
 };
-export const categoryLabels: Record<string, string> = {
-  senegal: 'Sénégal',
-  dakar: 'Dakar',
-  accessoires: 'Accessoires',
-  equipements: 'Équipements',
-  personnalisation: 'Personnalisation',
-  merchandising: 'Produits dérivés',
-};
-
 export function AdminProducts() {
   const [result, setResult] = useState<ProductPage | null>(null);
   const [page, setPage] = useState(1);
@@ -178,11 +169,16 @@ export function AdminProducts() {
                     <h2 className={styles.productName}>{product.name}</h2>
                     <div className={styles.meta}>
                       <span>{formatAdminPrice(product.priceXof)}</span>
-                      <span>{categoryLabels[product.category] || product.category}</span>
+                      <span>
+                        {product.stockQuantity == null
+                          ? 'Stock à renseigner'
+                          : `Stock : ${product.stockQuantity}`}
+                      </span>
+                      <span>{product.categoryLabel || product.category}</span>
                       <span
                         className={`${styles.badge} ${product.status === 'published' ? styles.published : product.status === 'deleting' ? styles.pending : ''}`}
                       >
-                        {adminStatusLabels[product.status]}
+                        {product.status === 'published' && product.publicationReady === false ? 'À compléter — non visible' : adminStatusLabels[product.status]}
                       </span>
                     </div>
                     {!!product.pendingMediaCleanup && (

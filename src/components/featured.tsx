@@ -1,12 +1,14 @@
 'use client';
+import { useCategories } from '@/components/catalogue/categories-provider';
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
-import { catalogueCategories, catalogueResponseSchema } from '@/lib/catalogue';
+import { catalogueResponseSchema } from '@/lib/catalogue';
 import { CatalogueCard } from './catalogue/catalogue-card';
 import { CatalogueState } from './catalogue/catalogue-state';
 import { useCatalogueResource } from './catalogue/use-catalogue-resource';
 export function Featured() {
+  const { categories } = useCategories();
   const [category, setCategory] = useState('');
   const query = new URLSearchParams({ page: '1' });
   if (category) query.set('category', category);
@@ -30,7 +32,7 @@ export function Featured() {
         </Link>
       </div>
       <div className="filter-row" role="group" aria-label="Filtrer la sélection">
-        {[{ value: '', label: 'Tout' }, ...catalogueCategories].map((c) => (
+        {[{ value: '', label: 'Tout' }, ...categories].map((c) => (
           <button
             key={c.value}
             aria-pressed={category === c.value}

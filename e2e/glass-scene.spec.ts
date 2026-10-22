@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.use({
   launchOptions: {
@@ -32,7 +32,7 @@ test('sans WebGL : emblème léger et univers disponibles sans collage', async (
   await scene.getByRole('button', { name: 'Voir l’univers Sénégal' }).click();
   await expect(scene.getByRole('img', { name: /Ensemble sportif vert/ })).toBeVisible();
   await scene.getByRole('link', { name: 'Découvrir la collection Sénégal' }).click();
-  await expect(page).toHaveURL(/category=senegal/);
+  await expect(page).toHaveURL(/\/boutique$/);
 });
 
 test.describe('rendu WebGL réel', () => {

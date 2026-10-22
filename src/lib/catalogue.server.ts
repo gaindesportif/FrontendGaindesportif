@@ -1,17 +1,22 @@
-import { catalogueCategories, catalogueResponseSchema, publicProductSchema } from '@/lib/catalogue';
+import {
+  categorySlugSchema,
+  categoriesResponseSchema,
+  catalogueResponseSchema,
+  publicProductSchema,
+} from '@/lib/catalogue';
 import { backendClientHeaders } from '@/lib/backend-request.server';
 
 export class CatalogueUnavailable extends Error {}
 export class CatalogueNotFound extends Error {}
 
-async function readBackend(path: string, incoming?: Headers) {
+async function readBackend(path: string, incoming?: Headers, endpoint = 'products') {
   const configured = process.env.BACKEND_URL;
   if (!configured) throw new CatalogueUnavailable();
   const backend = new URL(configured);
   if (!['http:', 'https:'].includes(backend.protocol) || backend.username || backend.password) {
     throw new CatalogueUnavailable();
   }
-  const response = await fetch(`${backend.href.replace(/\/$/, '')}/api/v1/products${path}`, {
+  const response = await fetch(`${backend.href.replace(/\/$/, '')}/api/v1/${endpoint}${path}`, {
     cache: 'no-store',
     headers: { Accept: 'application/json', ...backendClientHeaders(incoming) },
     signal: AbortSignal.timeout(12000),
@@ -31,7 +36,7 @@ export async function fetchCatalogue(searchParams: URLSearchParams, incoming?: H
   const search = searchParams.get('q')?.trim().slice(0, 100);
   if (search) query.set('q', search);
   const category = searchParams.get('category');
-  if (catalogueCategories.some((item) => item.value === category)) query.set('category', category!);
+  if (categorySlugSchema.safeParse(category).success) query.set('category', category!);
   return catalogueResponseSchema.parse(await readBackend(`?${query}`, incoming));
 }
 
@@ -40,4 +45,8 @@ export async function fetchCatalogueProduct(slug: string, incoming?: Headers) {
     throw new CatalogueNotFound();
   }
   return publicProductSchema.parse(await readBackend(`/${encodeURIComponent(slug)}`, incoming));
+}
+
+export async function fetchProductCategories(incoming?: Headers) {
+  return categoriesResponseSchema.parse(await readBackend('', incoming, 'categories'));
 }

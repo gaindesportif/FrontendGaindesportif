@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowUpRight, Play } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { catalogueCategoryLabel, formatXof, type PublicProduct } from '@/lib/catalogue';
 import { CatalogueImage } from './catalogue-image';
 import styles from './catalogue.module.css';
@@ -35,16 +35,13 @@ export function CatalogueCard({
           {image && (
             <CatalogueImage media={{ ...image, alt: image.alt || product.name }} sizes={sizes} />
           )}
-          {product.media.some((item) => item.type === 'video') && (
-            <span className={styles.videoBadge}>
-              <Play size={12} aria-hidden="true" /> Vidéo
-            </span>
-          )}
         </Link>
         <SaveProductButton product={product} />
       </div>
       <div className={styles.cardInfo}>
-        <span className={styles.category}>{catalogueCategoryLabel(product.category)}</span>
+        <span className={styles.category}>
+          {product.categoryLabel || catalogueCategoryLabel(product.category)}
+        </span>
         <Heading className={styles.cardName}>
           <Link href={`/boutique/${product.slug}`} onClick={onNavigate}>
             {product.name}

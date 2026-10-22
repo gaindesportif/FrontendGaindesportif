@@ -24,13 +24,11 @@ type UploadTicket = {
 export function ProductImportFields({
   onUpload,
   disabled = true,
-  videoDisabled = disabled,
   maxImages = 5,
   remainingImages = maxImages,
 }: {
   onUpload?: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
   disabled?: boolean;
-  videoDisabled?: boolean;
   maxImages?: number;
   remainingImages?: number;
 }) {
@@ -54,21 +52,6 @@ export function ProductImportFields({
           produit.
         </p>
       </div>
-      <div className={styles.field}>
-        <label htmlFor="product-upload-video">Importer une vidéo</label>
-        <input
-          className={styles.fileInput}
-          id="product-upload-video"
-          type="file"
-          accept="video/mp4,video/webm,video/quicktime"
-          onChange={onUpload}
-          disabled={videoDisabled}
-          aria-describedby="product-video-help"
-        />
-        <p id="product-video-help" className={styles.hint}>
-          MP4, WebM ou MOV ; 50 Mo maximum. Deux vidéos par produit au maximum.
-        </p>
-      </div>
     </div>
   );
 }
@@ -76,9 +59,11 @@ export function ProductImportFields({
 export function AdminProductMedia({
   product,
   onReload,
+  onBusyChange,
 }: {
   product: AdminProduct;
   onReload: () => Promise<void>;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const [config, setConfig] = useState<MediaConfig | null>(null);
   const [configLoading, setConfigLoading] = useState(true);
@@ -90,6 +75,10 @@ export function AdminProductMedia({
   const uploadActive = useRef(false);
   const [pendingUpload, setPendingUpload] = useState<{ mediaId: string; alt: string } | null>(null);
   const [remove, setRemove] = useState<ProductMedia | null>(null);
+  useEffect(() => {
+    onBusyChange?.(busy || uploading || !!pendingUpload);
+  }, [busy, uploading, pendingUpload, onBusyChange]);
+  useEffect(() => () => onBusyChange?.(false), [onBusyChange]);
   const base = `products/${product.id}/media`;
   const loadConfig = useCallback(async () => {
     setConfigLoading(true);
@@ -135,42 +124,27 @@ export function AdminProductMedia({
       return;
     setError('');
     setNotice('');
-    const type = input.id === 'product-upload-image' ? 'image' : 'video';
-    const allowed =
-      type === 'image'
-        ? ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif']
-        : ['video/mp4', 'video/webm', 'video/quicktime'];
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
     const maxImages = Math.min(5, config.maxImages ?? 5);
-    const currentCount = product.media.filter((item) => item.type === type).length;
+    const currentCount = product.media.filter((item) => item.type === 'image').length;
     if (
-      (type === 'image' && files.length + currentCount > maxImages) ||
-      (type === 'video' && (files.length > 1 || currentCount + files.length > config.maxVideos)) ||
+      files.length + currentCount > maxImages ||
       files.length + product.media.length > config.maxMedia
     ) {
       setError(
-        type === 'image'
-          ? `Un produit peut contenir ${maxImages} photos maximum. Vous pouvez encore en ajouter ${Math.max(0, maxImages - currentCount)}.`
-          : 'Importez une vidéo à la fois, dans la limite de deux vidéos par produit.',
+        `Un produit peut contenir ${maxImages} photos maximum. Vous pouvez encore en ajouter ${Math.max(0, maxImages - currentCount)}.`,
       );
       input.value = '';
       return;
     }
     if (files.some((file) => !allowed.includes(file.type))) {
-      setError(
-        type === 'image'
-          ? 'Choisissez uniquement des images JPG, PNG, WebP, AVIF ou GIF.'
-          : 'Choisissez une vidéo MP4, WebM ou MOV.',
-      );
+      setError('Choisissez uniquement des images JPG, PNG, WebP, AVIF ou GIF.');
       input.value = '';
       return;
     }
-    const limit = type === 'image' ? config.maxImageBytes : config.maxVideoBytes;
+    const limit = config.maxImageBytes;
     if (files.some((file) => file.size > limit || file.size === 0)) {
-      setError(
-        type === 'image'
-          ? 'Chaque image doit peser entre 1 octet et 10 Mo. Aucun fichier n’a été envoyé.'
-          : 'Cette vidéo doit peser entre 1 octet et 50 Mo.',
-      );
+      setError('Chaque image doit peser entre 1 octet et 10 Mo. Aucun fichier n’a été envoyé.');
       input.value = '';
       return;
     }
@@ -180,19 +154,15 @@ export function AdminProductMedia({
     let completed = 0;
     try {
       for (const file of files) {
-        setProgress(
-          type === 'image'
-            ? `Envoi de l’image ${completed + 1} sur ${files.length}, puis vérification…`
-            : 'Envoi de la vidéo, puis vérification…',
-        );
+        setProgress(`Envoi de l’image ${completed + 1} sur ${files.length}, puis vérification…`);
         const ticket = await adminFetch<UploadTicket>(`${base}/upload-signature`, {
           method: 'POST',
-          body: JSON.stringify({ type }),
+          body: JSON.stringify({ type: 'image' }),
         });
         const url = new URL(ticket.uploadUrl);
         if (
           url.origin !== 'https://api.cloudinary.com' ||
-          !/^\/v1_1\/[A-Za-z0-9_-]+\/(image|video)\/upload$/.test(url.pathname) ||
+          !/^\/v1_1\/[A-Za-z0-9_-]+\/image\/upload$/.test(url.pathname) ||
           url.search ||
           url.username ||
           url.password ||
@@ -310,7 +280,6 @@ export function AdminProductMedia({
   const media = [...product.media].sort((left, right) => left.position - right.position);
   const maxImages = Math.min(5, config?.maxImages ?? 5);
   const imageCount = product.media.filter((item) => item.type === 'image').length;
-  const videoCount = product.media.filter((item) => item.type === 'video').length;
   const importDisabled =
     configLoading ||
     !config?.configured ||
@@ -320,29 +289,30 @@ export function AdminProductMedia({
   return (
     <section className={styles.panel}>
       <div className={styles.headingRow}>
-        <h2>Photos et vidéos</h2>
+        <h2>Photos du produit</h2>
         <span className={styles.hint}>
-          {imageCount} / {maxImages} photos · {videoCount} / {config?.maxVideos ?? 2} vidéos
+          {imageCount} / {maxImages} photos
         </span>
       </div>
       <p className={styles.subtitle}>
         La première photo présente le produit dans la boutique et sa collection. Ajoutez les autres
-        vues et vidéos dans sa galerie.
+        vues dans sa galerie.
       </p>
       <p className={styles.hint}>
-        Ajoutez jusqu’à cinq photos par produit, en une ou plusieurs sélections. Les vidéos
-        s’importent une par une. Le produit apparaît dans la boutique uniquement après sa
-        publication.
+        Ajoutez jusqu’à cinq photos par produit, en une ou plusieurs sélections. Le produit apparaît
+        dans la boutique uniquement après sa publication.
       </p>
+      {product.status === 'published' && (
+        <p className={styles.notice}>
+          Les changements de photos sont immédiatement visibles sur cette fiche publiée. Pour
+          préparer toute la fiche en privé, retirez d’abord le produit de la boutique.
+        </p>
+      )}
       <ProductImportFields
         onUpload={upload}
         disabled={importDisabled || imageCount >= maxImages}
         maxImages={maxImages}
         remainingImages={Math.max(0, maxImages - imageCount)}
-        videoDisabled={
-          importDisabled ||
-          product.media.filter((item) => item.type === 'video').length >= (config?.maxVideos ?? 2)
-        }
       />
       {configLoading ? (
         <p role="status">Vérification des médias…</p>
@@ -350,8 +320,8 @@ export function AdminProductMedia({
         <div className={styles.notice}>
           <p>
             {config
-              ? 'L’ajout de photos et vidéos est indisponible tant que Cloudinary n’est pas configuré. Votre brouillon peut être enregistré dès maintenant.'
-              : 'La disponibilité des médias n’a pas pu être vérifiée. Vous pouvez enregistrer ce brouillon et réessayer plus tard.'}
+              ? 'L’ajout de photos est indisponible tant que Cloudinary n’est pas configuré. Vous pouvez enregistrer le produit sans le publier.'
+              : 'La disponibilité des médias n’a pas pu être vérifiée. Vous pouvez enregistrer le produit et réessayer plus tard.'}
           </p>
           <button className={styles.secondary} onClick={() => void loadConfig()} disabled={busy}>
             Vérifier à nouveau
@@ -359,16 +329,11 @@ export function AdminProductMedia({
         </div>
       ) : product.media.length >= config.maxMedia ? (
         <p className={styles.notice}>
-          La limite de médias est atteinte. Retirez une photo ou une vidéo pour en importer une
-          autre.
+          La limite de médias est atteinte. Retirez une photo pour en importer une autre.
         </p>
       ) : imageCount >= maxImages ? (
         <p className={styles.hint}>
           Les cinq photos sont ajoutées. Retirez une photo pour en importer une autre.
-        </p>
-      ) : videoCount >= config.maxVideos ? (
-        <p className={styles.hint}>
-          La limite de vidéos est atteinte. Vous pouvez encore ajouter des images.
         </p>
       ) : null}
       {uploading && (
@@ -422,12 +387,7 @@ export function AdminProductMedia({
                   unoptimized
                 />
               ) : (
-                <video
-                  src={item.url}
-                  controls
-                  preload="metadata"
-                  aria-label={item.alt || `Vidéo de ${product.name}`}
-                />
+                <p>Ancienne vidéo — vous pouvez la retirer.</p>
               )}
               <p className={styles.hint}>
                 {item.type === 'image' ? 'Photo' : 'Vidéo'} {index + 1}

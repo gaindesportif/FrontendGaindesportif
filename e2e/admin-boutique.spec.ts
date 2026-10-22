@@ -1,4 +1,4 @@
-import { test, expect, type Page, type Route } from '@playwright/test';
+import { test, expect, type Page, type Route, defaultCategories } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 
 const owner = {
@@ -14,7 +14,8 @@ const product = {
   name: 'Article fictif de recette',
   slug: 'article-fictif-de-recette',
   description: 'Donnée fictive réservée aux tests automatisés.',
-  category: 'senegal',
+  category: 'maillots',
+  stockQuantity: 100,
   priceXof: null as number | null,
   sizes: [] as string[],
   colors: [] as string[],
@@ -39,6 +40,8 @@ async function mockAdmin(
   const currentUser = { ...owner, role: options.role ?? 'owner' };
   let current = structuredClone(product);
   let ticketCount = 0;
+  const categories = structuredClone(defaultCategories);
+  await page.route('**/api/categories', (route) => json(route, { items: categories }));
   const requests: Array<{ path: string; method: string; body: Record<string, unknown> | null }> =
     [];
   await page.route('**/api/admin/**', async (route) => {
@@ -63,10 +66,18 @@ async function mockAdmin(
         configured: options.configured ?? false,
         maxImageBytes: 10485760,
         maxVideoBytes: 52428800,
-        maxMedia: 8,
+        maxMedia: 5,
         maxImages: 5,
-        maxVideos: 2,
+        maxVideos: 0,
       });
+    if (path === 'categories' && method === 'POST') {
+      const label = String(body?.name);
+      const value = label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      if (categories.some((c) => c.value === value))
+        return json(route, { message: 'Cette catégorie existe déjà.' }, 409);
+      categories.push({ value, label });
+      return json(route, { value, label }, 201);
+    }
     if (path === 'accounts') return json(route, { items: [owner] });
     if (path === 'products' && method === 'GET')
       return json(route, { items: [current], total: 1, page: 1, pageSize: 24 });
@@ -150,31 +161,31 @@ test('administration : brouillon, erreur réseau avec champs conservés et Cloud
 }) => {
   const requests = await mockAdmin(page);
   await page.goto('/administration/produits/nouveau');
-  await expect(page.getByLabel('Importer des images', { exact: true })).toBeVisible();
-  await expect(page.getByLabel('Importer des images', { exact: true })).toBeDisabled();
-  await expect(page.getByLabel('Importer une vidéo', { exact: true })).toBeDisabled();
+  await expect(page.getByText('Photos du produit', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Importer des images', { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Importer une vidéo', { exact: true })).toHaveCount(0);
   await page.getByLabel('Nom du produit', { exact: true }).fill('Article fictif de recette');
+  await page.getByLabel('Catégorie', { exact: true }).selectOption('maillots');
   await page
     .getByLabel('Description et détails', { exact: true })
     .fill('Donnée fictive réservée aux tests automatisés.');
   await page.route('**/api/admin/products', (route) =>
     json(route, { message: 'Enregistrement indisponible pour ce test.' }, 503),
   );
-  await page.getByRole('button', { name: 'Créer le brouillon' }).click();
+  await page.getByRole('button', { name: 'Continuer vers les photos' }).click();
   await expect(page.getByRole('main').getByRole('alert')).toContainText('indisponible');
   await expect(page.getByLabel('Nom du produit', { exact: true })).toHaveValue(
     'Article fictif de recette',
   );
   await page.unroute('**/api/admin/products');
-  await page.getByRole('button', { name: 'Créer le brouillon' }).click();
+  await page.getByRole('button', { name: 'Continuer vers les photos' }).click();
   await expect(page).toHaveURL(new RegExp(`/administration/produits/${product.id}$`));
   await expect(
     page.getByText('tant que Cloudinary n’est pas configuré', { exact: false }),
   ).toBeVisible();
   await expect(page.getByLabel('Importer des images', { exact: true })).toBeVisible();
   await expect(page.getByLabel('Importer des images', { exact: true })).toBeDisabled();
-  await page.getByLabel('Publication', { exact: true }).selectOption('published');
-  await page.getByRole('button', { name: 'Enregistrer les modifications' }).click();
+  await page.getByRole('button', { name: 'Publier le produit', exact: true }).click();
   await expect(page.getByRole('main').getByRole('alert')).toContainText('au moins une photo');
   expect(requests.some((request) => request.method === 'PATCH')).toBe(false);
 });
@@ -202,10 +213,16 @@ test('administration : import image direct vers Cloudinary, publication et retra
   expect(uploadBody).not.toContain('api_secret');
   expect(requests.some((request) => request.path.endsWith('/confirm'))).toBe(true);
   await page.getByLabel('Prix en F CFA (XOF)', { exact: true }).fill('15000');
-  await page.getByLabel('Publication', { exact: true }).selectOption('published');
-  await page.getByRole('button', { name: 'Enregistrer les modifications' }).click();
+  await page.getByLabel('Stock total disponible', { exact: true }).fill('3');
+  await page.getByRole('button', { name: 'Publier le produit', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Aperçu avant publication' })).toBeVisible();
+  expect(requests.some((request) => request.method === 'PATCH')).toBe(false);
+  await page.getByRole('button', { name: 'Confirmer la publication', exact: true }).click();
   await expect(
-    page.getByRole('main').getByRole('status').filter({ hasText: 'enregistré et publié' }),
+    page
+      .getByRole('main')
+      .getByRole('status')
+      .filter({ hasText: 'Produit publié dans la boutique.' }),
   ).toBeVisible();
   expect(requests.find((request) => request.method === 'PATCH')?.body).toMatchObject({
     priceXof: 15000,
@@ -219,7 +236,9 @@ test('administration : import image direct vers Cloudinary, publication et retra
   await expect(
     page.getByText('Sa suppression de Cloudinary reste en attente', { exact: false }),
   ).toBeVisible();
-  await expect(page.getByLabel('Publication', { exact: true })).toHaveValue('draft');
+  await expect(
+    page.getByRole('button', { name: 'Enregistrer sans publier', exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Retirer', exact: true })).toHaveCount(0);
   expect(
     requests.some(
@@ -241,7 +260,7 @@ test('administration : erreur d’import image, envoi en attente et retrait avan
     'Cet envoi n’a pas pu être confirmé',
   );
   await expect(page.getByLabel('Importer des images', { exact: true })).toBeDisabled();
-  await expect(page.getByLabel('Importer une vidéo', { exact: true })).toBeDisabled();
+  await expect(page.getByLabel('Importer une vidéo', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Vérifier cet envoi', exact: true })).toBeVisible();
   expect(requests.some((request) => request.path.endsWith('/confirm'))).toBe(false);
   await page.getByRole('button', { name: 'Retirer cet envoi', exact: true }).click();
@@ -249,10 +268,10 @@ test('administration : erreur d’import image, envoi en attente et retrait avan
     page.getByText('Envoi retiré. Son nettoyage Cloudinary reste en attente.'),
   ).toBeVisible();
   await expect(page.getByLabel('Importer des images', { exact: true })).toBeEnabled();
-  await expect(page.getByLabel('Importer une vidéo', { exact: true })).toBeEnabled();
+  await expect(page.getByLabel('Importer une vidéo', { exact: true })).toHaveCount(0);
 });
 
-test('administration : sélection de cinq images, progression et quota distinct des vidéos', async ({
+test('administration : sélection de cinq photos, progression et absence d’import vidéo', async ({
   page,
 }) => {
   const requests = await mockAdmin(page, { configured: true });
@@ -288,7 +307,7 @@ test('administration : sélection de cinq images, progression et quota distinct 
   expect(requests.filter((request) => request.path.endsWith('/upload-signature'))).toHaveLength(5);
   expect(requests.filter((request) => request.path.endsWith('/confirm'))).toHaveLength(5);
   await expect(images).toBeDisabled();
-  await expect(page.getByLabel('Importer une vidéo', { exact: true })).toBeEnabled();
+  await expect(page.getByLabel('Importer une vidéo', { exact: true })).toHaveCount(0);
 });
 
 test('administration : sélection trop grande ou invalide refusée avant envoi, places restantes respectées', async ({
@@ -416,4 +435,65 @@ test('administration : droits affichés, clavier, accessibilité et mobile', asy
       true,
     );
   }
+});
+
+test('administration : catégorie personnalisée, stock, aperçu privé puis publication explicite', async ({
+  page,
+}) => {
+  const requests = await mockAdmin(page, { configured: true });
+  await page.route('https://api.cloudinary.com/**', (route) => json(route, { uploaded: true }));
+  await page.goto('/administration/produits/nouveau');
+  await expect(
+    page
+      .getByLabel('Catégorie', { exact: true })
+      .getByRole('option', { name: 'Sénégal', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page
+      .getByLabel('Catégorie', { exact: true })
+      .getByRole('option', { name: 'Dakar', exact: true }),
+  ).toHaveCount(0);
+  await page.getByLabel('Nom du produit', { exact: true }).fill(product.name);
+  await page.getByLabel('Prix en F CFA (XOF)', { exact: true }).fill('15000');
+  await page.getByLabel('Stock total disponible', { exact: true }).fill('2');
+  await page.getByRole('button', { name: 'Créer une catégorie', exact: true }).click();
+  await page.getByLabel('Nom de la catégorie', { exact: true }).fill('Casquettes de recette');
+  await page.getByRole('button', { name: 'Créer la catégorie', exact: true }).click();
+  await expect(page.getByLabel('Catégorie', { exact: true })).toHaveValue('casquettes-de-recette');
+  await page.getByRole('button', { name: 'Continuer vers les photos', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/administration/produits/${product.id}$`));
+  await page
+    .getByLabel('Importer des images', { exact: true })
+    .setInputFiles({ name: 'photo.png', mimeType: 'image/png', buffer: png });
+  await expect(page.getByText('Média ajouté et vérifié.')).toBeVisible();
+  await page.getByRole('button', { name: 'Publier le produit', exact: true }).click();
+  const preview = page.getByRole('dialog', { name: 'Aperçu avant publication' });
+  await expect(preview.getByRole('heading', { name: product.name, exact: true })).toBeVisible();
+  const bounds = await preview.boundingBox();
+  expect(Math.abs(bounds!.x + bounds!.width / 2 - page.viewportSize()!.width / 2)).toBeLessThan(2);
+  await expect(preview).toContainText('2 article(s) en stock au total');
+  await expect(preview).toContainText('Casquettes de recette');
+  expect(
+    requests.some((request) => request.method === 'PATCH' && request.body?.status === 'published'),
+  ).toBe(false);
+  await preview.getByRole('button', { name: 'Revenir aux modifications', exact: true }).click();
+  await expect(preview).not.toBeVisible();
+  await expect(page.getByLabel('Stock total disponible', { exact: true })).toHaveValue('2');
+  await page.getByRole('button', { name: 'Publier le produit', exact: true }).click();
+  await preview.getByRole('button', { name: 'Confirmer la publication', exact: true }).click();
+  await expect(
+    page.getByRole('main').getByRole('status').filter({ hasText: 'Produit publié' }),
+  ).toBeVisible();
+  expect(
+    requests.filter(
+      (request) => request.method === 'PATCH' && request.body?.status === 'published',
+    ),
+  ).toHaveLength(1);
+  await page.route('**/api/catalogue?*', (route) =>
+    json(route, { items: [], total: 0, page: 1, pageSize: 24 }),
+  );
+  await page.goto('/boutique?category=casquettes-de-recette');
+  await expect(
+    page.getByRole('button', { name: 'Casquettes de recette', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
 });

@@ -22,6 +22,8 @@ export type AdminProduct = {
   description: string;
   priceXof: number | null;
   category: string;
+  categoryLabel?: string;
+  stockQuantity: number | null;
   sizes: string[];
   colors: string[];
   availability: 'available' | 'on_request' | 'unavailable';
@@ -30,6 +32,7 @@ export type AdminProduct = {
   updatedAt: string;
   createdAt: string;
   pendingMediaCleanup?: number;
+  publicationReady?: boolean;
 };
 
 export class AdminApiError extends Error {

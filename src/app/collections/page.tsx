@@ -1,5 +1,5 @@
 import { permanentRedirect } from 'next/navigation';
-import { catalogueCategories } from '@/lib/catalogue';
+import { categorySlugSchema } from '@/lib/catalogue';
 
 export default async function CollectionsPage({
   searchParams,
@@ -8,10 +8,7 @@ export default async function CollectionsPage({
 }) {
   const params = await searchParams;
   const query = new URLSearchParams();
-  if (
-    typeof params.category === 'string' &&
-    catalogueCategories.some((category) => category.value === params.category)
-  )
+  if (typeof params.category === 'string' && categorySlugSchema.safeParse(params.category).success)
     query.set('category', params.category);
   if (typeof params.q === 'string' && params.q.trim())
     query.set('q', params.q.trim().slice(0, 100));
