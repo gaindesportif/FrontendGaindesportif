@@ -151,7 +151,7 @@ test('pause commune : le texte reprend sans sauter ni continuer en arrière-plan
 }) => {
   await page.goto('/');
   const title = page.getByTestId('kinetic-title');
-  const scene = page.getByTestId('hero-scene');
+  const scene = page.getByTestId('cinematic-hero');
   await expect(page.getByTestId('home-hero')).toHaveAttribute('data-enhanced', 'true');
   // Replacer l'entrée avant la pause même si le chargement de page l'a déjà terminée.
   await title.evaluate((element) => {
@@ -159,9 +159,7 @@ test('pause commune : le texte reprend sans sauter ni continuer en arrière-plan
       animation.currentTime = 250;
     }
   });
-  await scene
-    .getByRole('button', { name: 'Mettre les animations et le défilement en pause' })
-    .click();
+  await scene.getByRole('button', { name: 'Mettre les animations en pause' }).click();
   await expect(page.getByTestId('home-hero')).toHaveAttribute('data-motion', 'paused');
   // L'appel play() de WAAPI forcerait un état JS qui ne suit plus la pause CSS.
   await expect
@@ -190,7 +188,7 @@ test('pause commune : le texte reprend sans sauter ni continuer en arrière-plan
       .map((animation) => ({ time: animation.currentTime, state: animation.playState })),
   );
   expect(later).toEqual(paused);
-  await scene.getByRole('button', { name: 'Reprendre les animations et le défilement' }).click();
+  await scene.getByRole('button', { name: 'Reprendre les animations' }).click();
   await expect
     .poll(() =>
       title.evaluate((element) =>

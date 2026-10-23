@@ -1,147 +1,103 @@
 import { test, expect } from './fixtures';
-
-test.use({
-  launchOptions: {
-    ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}),
-    // GPU logiciel de test uniquement ; aucune option de ce type côté visiteurs.
-    args: ['--enable-unsafe-swiftshader'],
-  },
-});
-
-test('sans WebGL : emblème léger et univers disponibles sans collage', async ({ page }) => {
+test('WebGL indisponible : illustration et interactions restent présentes', async ({ page }) => {
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext;
     Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
       value(this: HTMLCanvasElement, kind: string, ...args: unknown[]) {
-        if (kind === 'webgl2') {
-          document.documentElement.dataset.webglUnavailable = 'true';
-          return null;
-        }
-        return Reflect.apply(original, this, [kind, ...args]);
+        return kind.includes('webgl') ? null : Reflect.apply(original, this, [kind, ...args]);
       },
     });
   });
   await page.goto('/');
-  await page.getByTestId('hero-viewport').scrollIntoViewIfNeeded();
-  await expect(page.locator('html')).toHaveAttribute('data-webgl-unavailable', 'true');
-  const scene = page.getByTestId('hero-scene');
-  await expect(scene).toHaveAttribute('data-renderer', 'static');
-  await expect(scene.getByTestId('hero-emblem')).toBeVisible();
-  await expect(scene.locator('figure')).toHaveCount(0);
-  await expect(page.getByTestId('glass-canvas')).toHaveCount(0);
-  await scene.getByRole('button', { name: 'Voir l’univers Sénégal' }).click();
-  await expect(scene.getByRole('img', { name: /Ensemble sportif vert/ })).toBeVisible();
-  await scene.getByRole('link', { name: 'Découvrir la collection Sénégal' }).click();
-  await expect(page).toHaveURL(/\/boutique$/);
+  await expect(page.getByTestId('pillar-star-stage')).toHaveAttribute('data-renderer', 'static');
+  await expect(page.getByTestId('pillar-star-stage').locator('svg')).toBeVisible();
+  await page.getByRole('button', { name: '02 La ville', exact: true }).click();
+  await expect(page.getByTestId('pillar-star-stage')).toHaveAttribute('data-palette', 'ville');
+});
+test('vraie scène WebGL : pause GPU, rotation et perte de contexte', async ({ browser }) => {
+  test.setTimeout(60000);
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const page = await context.newPage();
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  const host = page.getByTestId('pillar-star-stage');
+  await expect(host).toHaveAttribute('data-renderer', 'webgl', { timeout: 20000 });
+  const frame = () => host.locator('div[data-frame]').getAttribute('data-frame');
+  // Changer l’ambiance et redimensionner ne doivent jamais inverser l’horloge
+  // ni projeter les cinq branches hors de la composition.
+  await expect
+    .poll(
+      async () => Number(await host.locator('div[data-expansion]').getAttribute('data-expansion')),
+      { timeout: 15000 },
+    )
+    .toBeLessThan(0.02);
+  await page.getByRole('button', { name: '02 La ville', exact: true }).click();
+  await page.setViewportSize({ width: 1360, height: 960 });
+  await expect
+    .poll(
+      async () => Number(await host.locator('div[data-expansion]').getAttribute('data-expansion')),
+      { timeout: 15000 },
+    )
+    .toBeLessThan(0.02);
+  const first = await frame();
+  await expect.poll(frame).not.toBe(first);
+  await page.getByRole('button', { name: 'Faire tourner l’étoile', exact: true }).click();
+  await page.getByRole('button', { name: 'Mettre les animations en pause', exact: true }).click();
+  await expect(host).toHaveAttribute('data-motion', 'paused');
+  const paused = await frame();
+  await page.waitForTimeout(300);
+  expect(await frame()).toBe(paused);
+  await page.getByRole('button', { name: 'Reprendre les animations', exact: true }).click();
+  await expect.poll(frame).not.toBe(paused);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.getByTestId('pillar-star-canvas')).toHaveCount(0);
+  await expect(host.locator('svg')).toHaveAttribute('data-ready', 'false');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await expect(host).toHaveAttribute('data-renderer', 'webgl', { timeout: 20000 });
+  await expect(page.getByTestId('pillar-star-canvas')).toHaveCount(1);
+  await page.getByTestId('pillar-star-canvas').evaluate((canvas) => {
+    const gl = (canvas as HTMLCanvasElement).getContext('webgl2');
+    gl?.getExtension('WEBGL_lose_context')?.loseContext();
+  });
+  await expect(host).toHaveAttribute('data-renderer', 'static');
+  await expect(host.locator('svg')).toBeVisible();
+  expect(errors).toEqual([]);
+  await context.close();
 });
 
-test.describe('rendu WebGL réel', () => {
-  test('actualisation avec JavaScript retardé : aucun retour du collage', async ({ page }) => {
-    test.setTimeout(60000);
-    let releaseScripts!: () => void;
-    const scriptsReady = new Promise<void>((resolve) => {
-      releaseScripts = resolve;
-    });
-    await page.route('**/_next/static/chunks/**', async (route) => {
-      if (route.request().resourceType() === 'script') await scriptsReady;
-      await route.continue();
-    });
-    try {
-      await page.goto('/', { waitUntil: 'commit' });
-      const hero = page.getByTestId('home-hero');
-      const scene = page.getByTestId('hero-scene');
-      await expect(hero.getByRole('heading', { level: 1 })).toBeVisible();
-      await expect(scene.getByTestId('hero-emblem')).toBeVisible();
-      await expect(scene).toHaveAttribute('data-renderer', 'static');
-      await expect(scene.locator('figure')).toHaveCount(0);
-      await expect(scene.getByText('LE SÉNÉGAL DANS L’ÂME.')).toHaveCount(0);
-      await expect(
-        scene.getByRole('button', { name: 'Animation 3D disponible avec JavaScript' }),
-      ).toBeDisabled();
-      // Le texte et la scène ont une place réservée avant l'hydratation.
-      const before = await page.getByTestId('hero-viewport').boundingBox();
-      releaseScripts();
-      await page.getByTestId('hero-viewport').scrollIntoViewIfNeeded();
-      await expect(scene).toHaveAttribute('data-renderer', 'webgl', { timeout: 25000 });
-      await expect(scene.getByTestId('hero-emblem')).not.toBeVisible();
-      await expect(scene.locator('figure')).toHaveCount(0);
-      const after = await page.getByTestId('hero-viewport').boundingBox();
-      expect(after?.height).toBe(before?.height);
-    } finally {
-      releaseScripts();
-    }
-  });
-
-  test('volumes, pause GPU, changement d’univers et perte de contexte', async ({ page }) => {
-    test.setTimeout(60000);
-    const errors: string[] = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto('/');
-    await page.getByTestId('hero-viewport').scrollIntoViewIfNeeded();
-    const scene = page.getByTestId('hero-scene');
-    const stage = page.getByTestId('glass-stage');
-    await expect(scene).toHaveAttribute('data-renderer', 'webgl', { timeout: 25000 });
-    await expect(page.getByTestId('glass-canvas')).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
-      true,
-    );
-    await expect
-      .poll(async () => Number(await stage.getAttribute('data-frames')))
-      .toBeGreaterThan(3);
-    // Horloge réelle : le changement automatique atteint aussi le moteur GPU.
-    const initialUniverse = await scene.getAttribute('data-universe');
-    await expect(scene).not.toHaveAttribute('data-universe', initialUniverse!, { timeout: 10000 });
-    const automaticUniverse = await scene.getAttribute('data-universe');
-    await expect(stage).toHaveAttribute('data-universe', automaticUniverse!);
-    await expect(stage).toHaveAttribute('data-transition', 'idle');
-    await scene
-      .getByRole('button', { name: 'Mettre les animations et le défilement en pause' })
-      .click();
-    await expect(stage).toHaveAttribute('data-running', 'false');
-    const pausedFrames = await stage.getAttribute('data-frames');
-    await page.waitForTimeout(350);
-    expect(await stage.getAttribute('data-frames')).toBe(pausedFrames);
-    await scene.getByRole('button', { name: 'Voir l’univers Sénégal' }).click();
-    await expect(stage).toHaveAttribute('data-universe', 'senegal');
-    await expect(stage).toHaveAttribute('data-shape', 'star');
-    await scene.getByRole('button', { name: 'Voir l’univers Accessoires' }).click();
-    await expect(stage).toHaveAttribute('data-universe', 'accessoires');
-    await expect(stage).toHaveAttribute('data-shape', 'star');
-    await expect(
-      scene.getByRole('list', { name: 'Les cinq piliers de Gainde Sportif' }).getByRole('listitem'),
-    ).toHaveCount(5);
-    await scene.getByRole('button', { name: 'Voir l’univers Sénégal' }).click();
-    await scene.getByRole('button', { name: 'Reprendre les animations et le défilement' }).click();
-    await expect(stage).toHaveAttribute('data-running', 'true');
-    const previous = Number(await stage.getAttribute('data-frames'));
-    await expect
-      .poll(async () => Number(await stage.getAttribute('data-frames')))
-      .toBeGreaterThan(previous);
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await expect(stage).toHaveAttribute('data-running', 'false');
-    const hiddenFrames = await stage.getAttribute('data-frames');
-    await page.waitForTimeout(350);
-    expect(await stage.getAttribute('data-frames')).toBe(hiddenFrames);
-    await page.getByTestId('hero-viewport').scrollIntoViewIfNeeded();
-    await expect(stage).toHaveAttribute('data-running', 'true');
-    // Un changement de préférence système doit détruire puis recréer la scène,
-    // sans flash vide durable ni perte de l’univers choisi.
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await expect(scene).toHaveAttribute('data-renderer', 'static');
-    await expect(page.getByTestId('glass-canvas')).toHaveCount(0);
-    await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await expect(scene).toHaveAttribute('data-renderer', 'webgl', { timeout: 25000 });
-    await expect(stage).toHaveAttribute('data-universe', 'senegal');
-    await page.getByTestId('glass-canvas').evaluate((canvas) => {
-      (canvas as HTMLCanvasElement)
-        .getContext('webgl2')
-        ?.getExtension('WEBGL_lose_context')
-        ?.loseContext();
-    });
-    await expect(scene).toHaveAttribute('data-renderer', 'static');
-    await expect(scene.getByTestId('hero-emblem')).toBeVisible();
-    await expect(page.getByTestId('glass-canvas')).toHaveCount(0);
-    await expect(scene.getByRole('img', { name: /Ensemble sportif vert/ })).toBeVisible();
-    expect(errors).toEqual([]);
-  });
+test('cycle automatique lent : piliers après assemblage, masqués avant séparation, pause et retour', async ({
+  page,
+}) => {
+  test.setTimeout(80000);
+  await page.goto('/');
+  const stage = page.getByTestId('pillar-star-stage');
+  await stage.scrollIntoViewIfNeeded();
+  await expect(stage).toHaveAttribute('data-renderer', 'webgl', { timeout: 20000 });
+  const hero = page.getByTestId('cinematic-hero');
+  const scene = stage.locator('div[data-phase]');
+  await expect(hero).toHaveAttribute('data-pillars-visible', 'false');
+  await expect(hero).toHaveAttribute('data-phase', 'assembled', { timeout: 15000 });
+  await expect(hero).toHaveAttribute('data-pillars-visible', 'true');
+  const kids = page.locator('button[data-pillar="kids"]');
+  await expect(kids).toHaveCSS('opacity', '1');
+  // Le focus donne tout le temps de lire et empêche la disparition sous le clavier.
+  await kids.focus();
+  await page.getByRole('button', { name: 'Mettre les animations en pause', exact: true }).click();
+  const paused = await scene.getAttribute('data-expansion');
+  await page.waitForTimeout(500);
+  expect(await scene.getAttribute('data-expansion')).toBe(paused);
+  await page.getByRole('button', { name: 'Reprendre les animations', exact: true }).click();
+  // Aucun survol involontaire ne maintient les légendes pendant la recette.
+  await page.mouse.move(1, 1);
+  await expect(hero).toHaveAttribute('data-pillars-visible', 'false', { timeout: 30000 });
+  await expect(kids).toHaveCSS('opacity', '0');
+  await expect(
+    page.getByRole('group', { name: 'Explorer les cinq piliers', exact: true }),
+  ).toHaveCount(0);
+  await expect(scene).toHaveAttribute('data-phase', 'separated', { timeout: 15000 });
+  await expect(scene).toHaveAttribute('data-expansion', '1.000');
+  await expect(hero).toHaveAttribute('data-phase', 'assembled', { timeout: 20000 });
+  await expect(hero).toHaveAttribute('data-pillars-visible', 'true');
+  await expect(page.locator('button[data-pillar="tech"]')).toHaveCSS('opacity', '1');
 });

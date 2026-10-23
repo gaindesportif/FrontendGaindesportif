@@ -2,6 +2,14 @@
 
 Next.js 16, React 19, TypeScript strict et Tailwind CSS 4. Application mobile prioritaire, images réelles de la marque et PWA.
 
+## Exploration locale de l’accueil — 23/10/2026
+
+Branche locale `exploration/accueil-cinema-20261023`, sans push ni déploiement. Référence visuelle : Short YouTube WlJJ_xTvpq4 (produits en volume, vue éclatée puis assemblage). Nouvelle scène éditoriale, révisée à la demande utilisateur : étoile sculptée en cinq facettes 3D et cinq piliers sélectionnables (TECH, INFRA, EVENT, MEDIA, KIDS), trois ambiances vert/ivoire/noir, rubans sénégalais, étoile réduite de 24 % et remontée, cycle automatique lent de 26 secondes, rotation et pause. Les cinq légendes apparaissent en cascade après l’assemblage et s’effacent avant toute séparation. Le bouton de déploiement a été retiré. Le maillot de la première proposition locale est remplacé. À gauche : entrée progressive des textes/actions, halo mobile, emblème tournant, reflets et flèches animées, avec pause commune et mouvement réduit.
+
+Moteur Three.js existant chargé à l’approche de la scène ; aucune nouvelle dépendance d’animation, aucun modèle/HDR/CDN externe. Ressources GPU libérées à la navigation/perte de contexte, boucle arrêtée à la pause/hors écran/onglet masqué. Réduction des mouvements et absence de JavaScript/WebGL : étoile SVG native visible, titre et liens accessibles. Choix d’ambiance et de pilier manuels. Cycle : assemblage 4 s, lecture 14 s, effacement 1 s, séparation 4 s, repos 3 s ; horloge figée en pause/hors écran/onglet masqué. Le survol ou le focus d’une légende suspend la chorégraphie pour laisser lire. Les légendes masquées sont aussi retirées du parcours clavier et de l’arbre accessible. Les cinq piliers présentent une vision, pas des services opérationnels. Le reste de l’accueil, les vraies photos, le catalogue et les comptes sont conservés. Les anciens composants d’étoile restent dans les sources pour comparaison.
+
+Validation visuelle locale et avis utilisateur attendus avant tout push. Les tests de l’ancienne scène d’étoile/défilement sont adaptés au nouveau parcours, avec vraie vérification WebGL, pause/repli, clavier, mobile, erreurs réseau et PWA. Le fichier parent ProjetContexte.md porte le suivi daté effectif.
+
 ## Boutique et gestion privée — préparation locale du 20/10/2026
 
 `/boutique` est l’unique catalogue : produits réellement publiés dans Nest ; `/boutique/[slug]` présente leur prix en XOF, leurs détails et leur galerie de photos. La demande d'achat ouvre WhatsApp avec le produit et les options choisis. Aucun paiement ou enregistrement de commande n'est annoncé par cette action. Les anciennes URL `/collections` redirigent vers cette boutique en conservant catégorie et recherche valides. Le menu Collections présente les dernières publications et les catégories du même catalogue, sans anciennes annonces statiques.
@@ -132,7 +140,6 @@ Vercel est possible pour le frontend sans acheter un autre domaine. Docker/Dokpl
 
 GitHub Actions vérifie lint, tests, build et navigateur. Aucun déploiement externe effectué à cette étape.
 
-
 ## Espace client — extension locale du 21/10/2026
 
 Entrée « Mon compte » dans le header ordinateur/mobile, routes `/compte`, `/compte/connexion`, `/compte/inscription` et `/compte/recuperation`. Le parcours reprend la présentation crème/vert profond du site. L’administration reste séparée.
@@ -148,7 +155,6 @@ Entrée « Mon compte » dans le header ordinateur/mobile, routes `/compte`, `/c
 Tests : `e2e/customer-account.spec.ts`, adaptation des anciens tests de favoris dans `e2e/unified-shop.spec.ts`, unités BFF client et retour interne sécurisé. Les tests navigateur utilisent des données synthétiques sur Chrome ordinateur et Pixel 7 simulé. La recette complète HTTP/SQL locale et les captures sont référencées dans le contexte parent ; elles ne valent pas publication ni acceptation manager.
 
 Le backend et sa migration cliente doivent être livrés avant ce frontend, après accord. La production actuelle continue à servir la version précédemment déployée. La source unique de suivi reste `../ProjetContexte.md`.
-
 
 ### E-mails et suivi des demandes
 
