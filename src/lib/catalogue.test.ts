@@ -27,6 +27,20 @@ const product: PublicProduct = {
 };
 
 describe('catalogue commercial public', () => {
+  it('accepte dix photos publiées et refuse une galerie dépassant la limite', () => {
+    const media = Array.from({ length: 10 }, (_, i) => ({
+      ...product.media[0],
+      id: `image-${i}`,
+      position: i,
+    }));
+    expect(publicProductSchema.safeParse({ ...product, media }).success).toBe(true);
+    expect(
+      publicProductSchema.safeParse({
+        ...product,
+        media: [...media, { ...media[0], id: 'image-11', position: 10 }],
+      }).success,
+    ).toBe(false);
+  });
   it('prépare une demande encodée avec prix, variantes, quantité et lien de la fiche', () => {
     const url = new URL(
       productWhatsappUrl(

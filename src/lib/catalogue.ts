@@ -63,7 +63,7 @@ export const publicProductSchema = z.object({
   media: z
     .array(publicMediaSchema)
     .min(1)
-    .max(5)
+    .max(10)
     .refine((items) => items.some((item) => item.type === 'image')),
   createdAt: z.string(),
   updatedAt: z.string(),

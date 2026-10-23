@@ -24,7 +24,7 @@ type UploadTicket = {
 export function ProductImportFields({
   onUpload,
   disabled = true,
-  maxImages = 5,
+  maxImages = 10,
   remainingImages = maxImages,
 }: {
   onUpload?: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
@@ -35,7 +35,7 @@ export function ProductImportFields({
   return (
     <div className={styles.importGrid}>
       <div className={styles.field}>
-        <label htmlFor="product-upload-image">Importer des images</label>
+        <label htmlFor="product-upload-image">Sélectionner une ou plusieurs photos</label>
         <input
           className={styles.fileInput}
           id="product-upload-image"
@@ -47,9 +47,10 @@ export function ProductImportFields({
           aria-describedby="product-image-help"
         />
         <p id="product-image-help" className={styles.hint}>
-          Sélectionnez jusqu’à {maxImages} images depuis votre ordinateur ou téléphone. JPG, PNG,
+          Choisissez plusieurs photos en une seule fois, jusqu’à {maxImages} par produit. JPG, PNG,
           WebP, AVIF ou GIF ; 10 Mo par image. {remainingImages} photo(s) encore possible(s) pour ce
-          produit.
+          produit. Sur ordinateur, maintenez Ctrl (ou ⌘ sur Mac) pour sélectionner plusieurs
+          fichiers.
         </p>
       </div>
     </div>
@@ -125,7 +126,7 @@ export function AdminProductMedia({
     setError('');
     setNotice('');
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
-    const maxImages = Math.min(5, config.maxImages ?? 5);
+    const maxImages = Math.min(10, config.maxImages ?? 10);
     const currentCount = product.media.filter((item) => item.type === 'image').length;
     if (
       files.length + currentCount > maxImages ||
@@ -278,7 +279,7 @@ export function AdminProductMedia({
     });
   }
   const media = [...product.media].sort((left, right) => left.position - right.position);
-  const maxImages = Math.min(5, config?.maxImages ?? 5);
+  const maxImages = Math.min(10, config?.maxImages ?? 10);
   const imageCount = product.media.filter((item) => item.type === 'image').length;
   const importDisabled =
     configLoading ||
@@ -299,8 +300,8 @@ export function AdminProductMedia({
         vues dans sa galerie.
       </p>
       <p className={styles.hint}>
-        Ajoutez jusqu’à cinq photos par produit, en une ou plusieurs sélections. Le produit apparaît
-        dans la boutique uniquement après sa publication.
+        Ajoutez jusqu’à {maxImages} photos par produit, en une ou plusieurs sélections. Le produit
+        apparaît dans la boutique uniquement après sa publication.
       </p>
       {product.status === 'published' && (
         <p className={styles.notice}>
@@ -333,7 +334,7 @@ export function AdminProductMedia({
         </p>
       ) : imageCount >= maxImages ? (
         <p className={styles.hint}>
-          Les cinq photos sont ajoutées. Retirez une photo pour en importer une autre.
+          Les {maxImages} photos sont ajoutées. Retirez une photo pour en importer une autre.
         </p>
       ) : null}
       {uploading && (

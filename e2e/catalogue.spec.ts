@@ -148,6 +148,27 @@ test('fiche : galerie photo au clavier et demande WhatsApp avec image', async ({
   await expect(page.getByText('Choisissez une quantité entière de 1 à 99.')).toBeVisible();
 });
 
+test('fiche : les dix photos restent consultables au clavier et sur mobile', async ({ page }) => {
+  await mockImages(page);
+  const media = Array.from({ length: 10 }, (_, i) => ({
+    ...product.media[0],
+    id: `photo-${i + 1}`,
+    alt: `Vue ${i + 1}`,
+    position: i,
+  }));
+  await page.route('**/api/catalogue/produit-test', (route) =>
+    route.fulfill({ json: { ...product, media } }),
+  );
+  await page.goto('/boutique/produit-test');
+  await expect(page.getByRole('heading', { name: product.name, exact: true })).toBeVisible();
+  const last = page.getByRole('button', { name: 'Voir la photo 10 : Vue 10', exact: true });
+  await last.focus();
+  await page.keyboard.press('Enter');
+  await expect(last).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('main').locator('img').first()).toHaveAttribute('alt', 'Vue 10');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 test('fiche : disponibilité, retrait et panne gardent des comportements distincts', async ({
   page,
 }) => {

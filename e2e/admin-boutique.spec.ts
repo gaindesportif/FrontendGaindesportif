@@ -66,8 +66,8 @@ async function mockAdmin(
         configured: options.configured ?? false,
         maxImageBytes: 10485760,
         maxVideoBytes: 52428800,
-        maxMedia: 5,
-        maxImages: 5,
+        maxMedia: 10,
+        maxImages: 10,
         maxVideos: 0,
       });
     if (path === 'categories' && method === 'POST') {
@@ -162,7 +162,9 @@ test('administration : brouillon, erreur réseau avec champs conservés et Cloud
   const requests = await mockAdmin(page);
   await page.goto('/administration/produits/nouveau');
   await expect(page.getByText('Photos du produit', { exact: true })).toBeVisible();
-  await expect(page.getByLabel('Importer des images', { exact: true })).toHaveCount(0);
+  await expect(
+    page.getByLabel('Sélectionner une ou plusieurs photos', { exact: true }),
+  ).toHaveCount(0);
   await expect(page.getByLabel('Importer une vidéo', { exact: true })).toHaveCount(0);
   await page.getByLabel('Nom du produit', { exact: true }).fill('Article fictif de recette');
   await page.getByLabel('Catégorie', { exact: true }).selectOption('maillots');
@@ -183,8 +185,12 @@ test('administration : brouillon, erreur réseau avec champs conservés et Cloud
   await expect(
     page.getByText('tant que Cloudinary n’est pas configuré', { exact: false }),
   ).toBeVisible();
-  await expect(page.getByLabel('Importer des images', { exact: true })).toBeVisible();
-  await expect(page.getByLabel('Importer des images', { exact: true })).toBeDisabled();
+  await expect(
+    page.getByLabel('Sélectionner une ou plusieurs photos', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByLabel('Sélectionner une ou plusieurs photos', { exact: true }),
+  ).toBeDisabled();
   await page.getByRole('button', { name: 'Publier le produit', exact: true }).click();
   await expect(page.getByRole('main').getByRole('alert')).toContainText('au moins une photo');
   expect(requests.some((request) => request.method === 'PATCH')).toBe(false);
@@ -204,9 +210,11 @@ test('administration : import image direct vers Cloudinary, publication et retra
     );
   });
   await page.goto(`/administration/produits/${product.id}`);
-  await expect(page.getByLabel('Importer des images', { exact: true })).toBeEnabled();
+  await expect(
+    page.getByLabel('Sélectionner une ou plusieurs photos', { exact: true }),
+  ).toBeEnabled();
   await page
-    .getByLabel('Importer des images', { exact: true })
+    .getByLabel('Sélectionner une ou plusieurs photos', { exact: true })
     .setInputFiles({ name: 'photo-recette.png', mimeType: 'image/png', buffer: png });
   await expect(page.getByText('Média ajouté et vérifié.')).toBeVisible();
   expect(uploadBody).toContain('photo-recette.png');
@@ -254,12 +262,14 @@ test('administration : erreur d’import image, envoi en attente et retrait avan
   await page.route('https://api.cloudinary.com/**', (route) => route.abort('failed'));
   await page.goto(`/administration/produits/${product.id}`);
   await page
-    .getByLabel('Importer des images', { exact: true })
+    .getByLabel('Sélectionner une ou plusieurs photos', { exact: true })
     .setInputFiles({ name: 'photo-recette.png', mimeType: 'image/png', buffer: png });
   await expect(page.getByRole('main').getByRole('alert')).toContainText(
     'Cet envoi n’a pas pu être confirmé',
   );
-  await expect(page.getByLabel('Importer des images', { exact: true })).toBeDisabled();
+  await expect(
+    page.getByLabel('Sélectionner une ou plusieurs photos', { exact: true }),
+  ).toBeDisabled();
   await expect(page.getByLabel('Importer une vidéo', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Vérifier cet envoi', exact: true })).toBeVisible();
   expect(requests.some((request) => request.path.endsWith('/confirm'))).toBe(false);
@@ -267,11 +277,13 @@ test('administration : erreur d’import image, envoi en attente et retrait avan
   await expect(
     page.getByText('Envoi retiré. Son nettoyage Cloudinary reste en attente.'),
   ).toBeVisible();
-  await expect(page.getByLabel('Importer des images', { exact: true })).toBeEnabled();
+  await expect(
+    page.getByLabel('Sélectionner une ou plusieurs photos', { exact: true }),
+  ).toBeEnabled();
   await expect(page.getByLabel('Importer une vidéo', { exact: true })).toHaveCount(0);
 });
 
-test('administration : sélection de cinq photos, progression et absence d’import vidéo', async ({
+test('administration : sélection de dix photos, progression et absence d’import vidéo', async ({
   page,
 }) => {
   const requests = await mockAdmin(page, { configured: true });
@@ -286,26 +298,26 @@ test('administration : sélection de cinq photos, progression et absence d’imp
     return json(route, { secure_url: 'https://res.cloudinary.com/recette/image/upload/photo.png' });
   });
   await page.goto(`/administration/produits/${product.id}`);
-  const images = page.getByLabel('Importer des images', { exact: true });
+  const images = page.getByLabel('Sélectionner une ou plusieurs photos', { exact: true });
   await expect(images).toHaveAttribute('multiple', '');
   await images.setInputFiles(
-    Array.from({ length: 5 }, (_, i) => ({
+    Array.from({ length: 10 }, (_, i) => ({
       name: `photo-${i + 1}.png`,
       mimeType: 'image/png',
       buffer: png,
     })),
   );
   await expect(
-    page.getByRole('status').filter({ hasText: 'Envoi de l’image 1 sur 5' }),
+    page.getByRole('status').filter({ hasText: 'Envoi de l’image 1 sur 10' }),
   ).toBeVisible();
   await expect(images).toBeDisabled();
   releaseFirst();
-  await expect(page.getByText('5 images ajoutées et vérifiées.', { exact: true })).toBeVisible();
-  await expect(page.getByRole('main').locator('img')).toHaveCount(5);
-  expect(uploaded).toHaveLength(5);
-  for (let i = 0; i < 5; i++) expect(uploaded[i]).toContain(`photo-${i + 1}.png`);
-  expect(requests.filter((request) => request.path.endsWith('/upload-signature'))).toHaveLength(5);
-  expect(requests.filter((request) => request.path.endsWith('/confirm'))).toHaveLength(5);
+  await expect(page.getByText('10 images ajoutées et vérifiées.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('main').locator('img')).toHaveCount(10);
+  expect(uploaded).toHaveLength(10);
+  for (let i = 0; i < 10; i++) expect(uploaded[i]).toContain(`photo-${i + 1}.png`);
+  expect(requests.filter((request) => request.path.endsWith('/upload-signature'))).toHaveLength(10);
+  expect(requests.filter((request) => request.path.endsWith('/confirm'))).toHaveLength(10);
   await expect(images).toBeDisabled();
   await expect(page.getByLabel('Importer une vidéo', { exact: true })).toHaveCount(0);
 });
@@ -316,14 +328,14 @@ test('administration : sélection trop grande ou invalide refusée avant envoi, 
   const requests = await mockAdmin(page, { configured: true });
   await page.route('https://api.cloudinary.com/**', (route) => json(route, { uploaded: true }));
   await page.goto(`/administration/produits/${product.id}`);
-  const images = page.getByLabel('Importer des images', { exact: true });
-  const files = Array.from({ length: 6 }, (_, i) => ({
+  const images = page.getByLabel('Sélectionner une ou plusieurs photos', { exact: true });
+  const files = Array.from({ length: 11 }, (_, i) => ({
     name: `photo-${i + 1}.png`,
     mimeType: 'image/png',
     buffer: png,
   }));
   await images.setInputFiles(files);
-  await expect(page.getByRole('main').getByRole('alert')).toContainText('5 photos maximum');
+  await expect(page.getByRole('main').getByRole('alert')).toContainText('10 photos maximum');
   expect(requests.filter((request) => request.path.endsWith('/upload-signature'))).toHaveLength(0);
   await images.setInputFiles([
     files[0],
@@ -333,13 +345,13 @@ test('administration : sélection trop grande ou invalide refusée avant envoi, 
     'Aucun fichier n’a été envoyé',
   );
   expect(requests.filter((request) => request.path.endsWith('/upload-signature'))).toHaveLength(0);
-  await images.setInputFiles(files.slice(0, 4));
-  await expect(page.getByText('4 images ajoutées et vérifiées.', { exact: true })).toBeVisible();
+  await images.setInputFiles(files.slice(0, 9));
+  await expect(page.getByText('9 images ajoutées et vérifiées.', { exact: true })).toBeVisible();
   await images.setInputFiles(files.slice(0, 2));
   await expect(page.getByRole('main').getByRole('alert')).toContainText('encore en ajouter 1');
-  expect(requests.filter((request) => request.path.endsWith('/upload-signature'))).toHaveLength(4);
-  await images.setInputFiles(files[4]);
-  await expect(page.getByRole('main').locator('img')).toHaveCount(5);
+  expect(requests.filter((request) => request.path.endsWith('/upload-signature'))).toHaveLength(9);
+  await images.setInputFiles(files[9]);
+  await expect(page.getByRole('main').locator('img')).toHaveCount(10);
   await expect(images).toBeDisabled();
   // Retirer une photo libère une place sans effacer les autres photos confirmées.
   await page.getByRole('button', { name: 'Retirer', exact: true }).first().click();
@@ -347,8 +359,34 @@ test('administration : sélection trop grande ou invalide refusée avant envoi, 
     .getByRole('dialog', { name: 'Supprimer le média' })
     .getByRole('button', { name: 'Confirmer le retrait', exact: true })
     .click();
-  await expect(page.getByRole('main').locator('img')).toHaveCount(4);
+  await expect(page.getByRole('main').locator('img')).toHaveCount(9);
   await expect(images).toBeEnabled();
+});
+
+test('administration : compléter une photo existante par neuf photos sélectionnées ensemble', async ({
+  page,
+}) => {
+  const requests = await mockAdmin(page, { configured: true });
+  await page.route('https://api.cloudinary.com/**', (route) => json(route, { uploaded: true }));
+  await page.goto(`/administration/produits/${product.id}`);
+  const images = page.getByLabel('Sélectionner une ou plusieurs photos', { exact: true });
+  await expect(images).toBeEnabled();
+  await images.setInputFiles({ name: 'couverture.png', mimeType: 'image/png', buffer: png });
+  await expect(page.getByRole('main').locator('img')).toHaveCount(1);
+  await expect(page.getByText('1 / 10 photos', { exact: true })).toBeVisible();
+  await expect(images).toBeEnabled();
+  await images.setInputFiles(
+    Array.from({ length: 9 }, (_, i) => ({
+      name: `vue-${i + 1}.png`,
+      mimeType: 'image/png',
+      buffer: png,
+    })),
+  );
+  await expect(page.getByText('9 images ajoutées et vérifiées.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('main').locator('img')).toHaveCount(10);
+  await expect(page.getByText('10 / 10 photos', { exact: true })).toBeVisible();
+  expect(requests.filter((request) => request.path.endsWith('/confirm'))).toHaveLength(10);
+  await expect(images).toBeDisabled();
 });
 
 test('administration : échec partiel du lot, photos conservées et reprise sans second upload', async ({
@@ -367,7 +405,7 @@ test('administration : échec partiel du lot, photos conservées et reprise sans
       : json(route, { message: 'Confirmation indisponible pour la recette.' }, 503),
   );
   await page.goto(`/administration/produits/${product.id}`);
-  const images = page.getByLabel('Importer des images', { exact: true });
+  const images = page.getByLabel('Sélectionner une ou plusieurs photos', { exact: true });
   await images.setInputFiles(
     Array.from({ length: 3 }, (_, i) => ({
       name: `photo-${i + 1}.png`,
@@ -463,7 +501,7 @@ test('administration : catégorie personnalisée, stock, aperçu privé puis pub
   await page.getByRole('button', { name: 'Continuer vers les photos', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/administration/produits/${product.id}$`));
   await page
-    .getByLabel('Importer des images', { exact: true })
+    .getByLabel('Sélectionner une ou plusieurs photos', { exact: true })
     .setInputFiles({ name: 'photo.png', mimeType: 'image/png', buffer: png });
   await expect(page.getByText('Média ajouté et vérifié.')).toBeVisible();
   await page.getByRole('button', { name: 'Publier le produit', exact: true }).click();
