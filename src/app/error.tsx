@@ -20,8 +20,8 @@ export default function ErrorPage({
       <button className="button button-dark" onClick={reset}>
         Réessayer
       </button>
-      <Link className="text-link" href="/">
-        Revenir à l’accueil
+      <Link className="text-link" href="/boutique">
+        Revenir à la boutique
       </Link>
     </section>
   );

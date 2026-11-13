@@ -1,5 +1,5 @@
 /* Repli offline uniquement : aucune page dynamique, API ou donnée personnelle en cache. */
-const CACHE = 'gainde-public-v1';
+const CACHE = 'gainde-public-v2';
 const PUBLIC_RESOURCES = ['/offline.html', '/icons/icon-192.png', '/icons/icon-512.png'];
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PUBLIC_RESOURCES)));

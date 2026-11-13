@@ -23,6 +23,9 @@ export function Footer() {
             <Link href="/boutique">
               La boutique <ArrowUpRight size={13} />
             </Link>
+            <Link href="/accueil">
+              Accueil <ArrowUpRight size={13} />
+            </Link>
             <Link href="/boutique?category=maillots">
               Maillots <ArrowUpRight size={13} />
             </Link>

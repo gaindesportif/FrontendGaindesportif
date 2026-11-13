@@ -164,3 +164,15 @@ Le backend et sa migration cliente doivent être livrés avant ce frontend, apr�
 - `/administration/demandes` affiche les demandes préparées par les clients connectés. L’équipe vérifie WhatsApp et confirme manuellement réception, expédition, livraison ou annulation. Dialogue de confirmation, version contre modifications concurrentes, état d’e-mail et erreurs réessayables. Aucun suivi transporteur ni API WhatsApp supposé.
 - Le compte client affiche ces statuts, avec la date de mise à jour. L’administrateur confirme le statut sans annoncer d’e-mail envoyé lorsque l’envoi est désactivé. Les notifications se limitent aux adresses confirmées. Les réglages Gmail et la clé de chiffrement appartiennent uniquement à l’environnement backend ; aucun secret `NEXT_PUBLIC_*`.
 - Les migrations backend doivent être appliquées avant déploiement des deux applications ; ne pas redéployer le conteneur PostgreSQL pour exécuter une migration.
+
+## Livraison — Boutique prioritaire et rédaction Gaindé Media
+
+L’entrée `/` ouvre directement `/boutique` (redirection temporaire avec paramètres conservés). L’ancien accueil reste disponible à `/accueil` et par son menu. Le logo, le démarrage PWA et les retours erreur/hors connexion privilégient la Boutique.
+
+La rédaction se trouve à `/administration/media` pour les administrateurs existants : brouillons, aperçu, photos, publication interne, dépublication et suppression. Le bouton « Choisir une photo » ouvre le sélecteur et affiche le nom/l’aperçu ; l’envoi signé va directement vers Cloudinary, sans binaire dans Next/VPS. Auteur, crédit et légende facultatifs. Photo obligatoire pour publier. Le texte long n’est pas tronqué ; titre limité à 160 caractères. La case « Mettre cet article à la une » prépare une unique mise en avant publique, sans rendre les brouillons visibles.
+
+**Semaine 2 bloquée :** `MEDIA_PUBLIC_ENABLED=false` par défaut côté serveur Next et Nest. Pages `/media`, `/media/[slug]` et API `/api/media/articles…` en 404 ; menu public Media masqué. Le code est conservé pour une réactivation décidée séparément : true dans les deux services et reconstruction Next (Docker : argument de construction `MEDIA_PUBLIC_ENABLED=true` et variable d’exécution true). Ne pas utiliser un réglage navigateur pour ouvrir les routes.
+
+Avant un déploiement explicitement autorisé, sauvegarder et migrer les deux tables Media avec le rôle prévu, vérifier les droits applicatifs/sauvegardes, livrer le backend puis le frontend, et effectuer une recette authentifiée. Le guide de migration est dans `docs/deploiement-media-semaine1.md` du dépôt backend. Aucun push de branche ne vaut mise en production.
+
+Les démonstrations de paiement, connexions de recette, données synthétiques, configurations temporaires et accès privés sont exclus du lot. Les régressions navigateur utilisent uniquement des données interceptées dans les tests ; aucun amorçage de comptes/produits/articles de démonstration n’est exécuté par l’application.

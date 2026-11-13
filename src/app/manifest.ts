@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'Gaindé',
     description: 'Dakar dans le cœur. Le Sénégal dans l’âme.',
     lang: 'fr',
-    start_url: '/',
+    start_url: '/boutique',
     scope: '/',
     display: 'standalone',
     background_color: '#f5f3ed',

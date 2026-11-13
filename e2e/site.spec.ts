@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 
-test('accueil, boutique unique, anciennes collections et navigation mobile', async ({
+test('entrée boutique, accueil accessible au menu et anciennes collections', async ({
   page,
   isMobile,
 }) => {
@@ -10,8 +10,24 @@ test('accueil, boutique unique, anciennes collections et navigation mobile', asy
   await page.route('**/api/catalogue?*', (route) =>
     route.fulfill({ json: { items: [], total: 0, page: 1, pageSize: 24 } }),
   );
+  const entry = await page.request.get('/?category=maillots&q=recette', { maxRedirects: 0 });
+  expect(entry.status()).toBe(307);
+  expect(entry.headers().location).toBe('/boutique?category=maillots&q=recette');
   await page.goto('/');
+  await expect(page).toHaveURL(/\/boutique$/);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Équipez-vous');
+  await expect(page.getByRole('heading', { level: 1 })).not.toContainText('LA FIERTÉ');
+  if (isMobile) await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
+  const navigation = page.getByRole('navigation', {
+    name: isMobile ? 'Navigation mobile' : 'Navigation principale',
+  });
+  const home = navigation.getByRole('link', { name: 'Accueil', exact: true });
+  await home.focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/accueil$/);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('LA FIERTÉ');
+  await page.getByRole('link', { name: 'Gaindé Sportif — boutique', exact: true }).click();
+  await expect(page).toHaveURL(/\/boutique$/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.goto('/collections?category=maillots');
   await expect(page).toHaveURL(/\/boutique\?category=maillots$/);
@@ -96,7 +112,7 @@ test('accessibilité WCAG : accueil, contact, boutique et dialogue', async ({ pa
   await page.route('**/api/catalogue?*', (route) =>
     route.fulfill({ json: { items: [], total: 0, page: 1, pageSize: 24 } }),
   );
-  for (const path of ['/', '/contact', '/boutique', '/a-propos']) {
+  for (const path of ['/accueil', '/contact', '/boutique', '/a-propos']) {
     await page.goto(path);
     await page.evaluate(() => document.fonts.ready);
     const result = await new AxeBuilder({ page })
@@ -119,6 +135,7 @@ test('PWA : manifeste, repli sans connexion et aucune API mise en cache', async 
   await page.goto('/');
   const manifest = await (await page.request.get('/manifest.webmanifest')).json();
   expect(manifest.display).toBe('standalone');
+  expect(manifest.start_url).toBe('/boutique');
   expect(manifest.icons).toHaveLength(3);
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
@@ -128,6 +145,9 @@ test('PWA : manifeste, repli sans connexion et aucune API mise en cache', async 
   await context.setOffline(true);
   await page.goto('/contact');
   await expect(page.getByRole('heading', { name: 'Le réseau fait une pause.' })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Retour à la boutique', exact: true }),
+  ).toHaveAttribute('href', '/boutique');
   const urls = await page.evaluate(async () => {
     const names = await caches.keys();
     return (

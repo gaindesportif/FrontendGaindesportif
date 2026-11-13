@@ -79,7 +79,7 @@ export function AdminSession({ children }: { children: ReactNode }) {
         <header className={styles.top}>
           <div>
             <p className={styles.eyebrow}>Gainde Sportif · Espace privé</p>
-            <p className={styles.subtitle}>La gestion de votre boutique.</p>
+            <p className={styles.subtitle}>Votre boutique et votre rédaction.</p>
           </div>
           {user && (
             <div className={styles.actions}>
@@ -115,6 +115,12 @@ export function AdminSession({ children }: { children: ReactNode }) {
               aria-current={pathname === '/administration/demandes' ? 'page' : undefined}
             >
               Demandes clients
+            </Link>
+            <Link
+              href="/administration/media"
+              aria-current={pathname.startsWith('/administration/media') ? 'page' : undefined}
+            >
+              Gaindé Media
             </Link>
             <Link href="/boutique">Voir la boutique</Link>
           </nav>

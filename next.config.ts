@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       { source: '/admin', destination: '/administration', permanent: false },
+      { source: '/', destination: '/boutique', permanent: false },
     ];
   },
   async headers() {

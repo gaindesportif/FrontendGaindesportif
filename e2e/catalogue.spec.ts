@@ -246,7 +246,7 @@ test('accueil : publications du catalogue, catégories, fiche et retrait', async
     return route.fulfill({ json: { items, total: items.length, page: 1, pageSize: 24 } });
   });
   await page.route('**/api/catalogue/produit-test', (route) => route.fulfill({ json: product }));
-  await page.goto('/');
+  await page.goto('/accueil');
   const selection = page.locator('#collections');
   await expect(selection.getByTestId('catalogue-card')).toHaveCount(4);
   await expect(selection.getByText('Publication de recette 5', { exact: true })).toHaveCount(0);
@@ -263,7 +263,7 @@ test('accueil : publications du catalogue, catégories, fiche et retrait', async
   await expect(page).toHaveURL(/boutique\/produit-test$/);
   await expect(page.getByRole('heading', { name: product.name, exact: true })).toBeVisible();
   withdrawn = true;
-  await page.goto('/');
+  await page.goto('/accueil');
   await expect(
     selection.getByRole('heading', { name: 'Les premières pièces arrivent ici.' }),
   ).toBeVisible();
@@ -291,7 +291,7 @@ test('accueil : erreur, reprise, données refusées et accessibilité de la sél
           },
     ),
   );
-  await page.goto('/');
+  await page.goto('/accueil');
   const selection = page.locator('#collections');
   await expect(
     selection.getByRole('heading', { name: 'Les produits font une pause.' }),

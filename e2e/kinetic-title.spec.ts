@@ -15,7 +15,7 @@ test.beforeEach(async ({ page }) => {
 test('entrée en panneaux depuis la droite, décalage entre lignes puis titre stable', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/accueil');
   const hero = page.getByTestId('home-hero');
   const title = page.getByRole('heading', { level: 1, name: 'LA FIERTÉ SE PORTE.', exact: true });
   await expect(hero).toHaveAttribute('data-enhanced', 'true');
@@ -82,7 +82,7 @@ test('entrée en panneaux depuis la droite, décalage entre lignes puis titre st
 test('reflet sur les deux lignes : lumière mobile, lettres fixes et repli statique', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/accueil');
   const title = page.getByTestId('kinetic-title');
   await expect(page.getByTestId('home-hero')).toHaveAttribute('data-enhanced', 'true');
   const snapshot = await title.evaluate((element) => {
@@ -149,7 +149,7 @@ test('reflet sur les deux lignes : lumière mobile, lettres fixes et repli stati
 test('pause commune : le texte reprend sans sauter ni continuer en arrière-plan', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/accueil');
   const title = page.getByTestId('kinetic-title');
   const scene = page.getByTestId('cinematic-hero');
   await expect(page.getByTestId('home-hero')).toHaveAttribute('data-enhanced', 'true');

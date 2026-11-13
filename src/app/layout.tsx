@@ -43,7 +43,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <CategoriesProvider>
           <CustomerProvider>
             <StoreProvider>
-              <Header />
+              <Header mediaPublicEnabled={process.env.MEDIA_PUBLIC_ENABLED === 'true'} />
               <main id="main" tabIndex={-1} className="min-h-[60svh] focus:outline-none">
                 {children}
               </main>

@@ -4,6 +4,7 @@ import { CatalogueExplorer } from '@/components/catalogue/catalogue-explorer';
 
 export const metadata: Metadata = {
   title: 'La boutique',
+  alternates: { canonical: '/boutique' },
   description:
     'Découvrez les produits Gainde Sportif, leurs détails et leurs visuels. Préparez votre demande sur WhatsApp.',
 };

@@ -2,7 +2,7 @@ import { test, expect } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 
 test('accueil cinéma : ambiances, détails, liens et pause', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/accueil');
   const hero = page.getByTestId('cinematic-hero');
   await expect(hero).toHaveAttribute('data-chapter', 'terrain');
   await hero.getByRole('button', { name: '02 La ville', exact: true }).click();
@@ -20,7 +20,7 @@ test('accueil cinéma : ambiances, détails, liens et pause', async ({ page }) =
 
 test('mouvement réduit : composition statique, clavier et accessibilité', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
+  await page.goto('/accueil');
   await expect(page.getByTestId('pillar-star-canvas')).toHaveCount(0);
   await expect(
     page.getByRole('button', { name: 'Animations réduites selon votre préférence' }),
@@ -38,7 +38,7 @@ test('mouvement réduit : composition statique, clavier et accessibilité', asyn
 
 test('cinéma mobile : cibles tactiles et aucune largeur débordante', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
+  await page.goto('/accueil');
   for (const width of [320, 360, 390, 768, 1024, 1440, 1920]) {
     await page.setViewportSize({ width, height: 1000 });
     expect(
@@ -57,7 +57,7 @@ test('sans JavaScript : illustration éditoriale, titre et liens restent disponi
 }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
-  await page.goto('/');
+  await page.goto('/accueil');
   await expect(page.getByRole('heading', { level: 1, name: 'LA FIERTÉ SE PORTE.' })).toBeVisible();
   await expect(
     page.getByRole('link', { name: 'Découvrir la boutique', exact: true }),
@@ -67,7 +67,7 @@ test('sans JavaScript : illustration éditoriale, titre et liens restent disponi
 });
 
 test('la vision des cinq piliers reste lisible et honnête', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/accueil');
   const list = page.getByRole('list', { name: 'Les cinq piliers de Gainde Sportif' });
   for (const label of ['TECH', 'INFRA', 'EVENT', 'MEDIA', 'KIDS'])
     await expect(list).toContainText(label);
@@ -85,7 +85,7 @@ test('la vision des cinq piliers reste lisible et honnête', async ({ page }) =>
 test('étoile : cinq piliers sélectionnables au clavier et animation de gauche suspendue', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/accueil');
   const constellation = page.getByRole('group', { name: 'Explorer les cinq piliers', exact: true });
   await page.getByTestId('pillar-star-stage').scrollIntoViewIfNeeded();
   await expect(constellation.getByRole('button')).toHaveCount(5, { timeout: 15000 });

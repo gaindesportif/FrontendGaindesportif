@@ -10,8 +10,8 @@ export default function NotFound() {
         cette page de vue.
       </h1>
       <p>Mais votre prochain Gaindé n’est pas loin.</p>
-      <Link href="/" className="button button-dark">
-        Retour à l’accueil <ArrowRight size={19} />
+      <Link href="/boutique" className="button button-dark">
+        Retour à la boutique <ArrowRight size={19} />
       </Link>
     </section>
   );

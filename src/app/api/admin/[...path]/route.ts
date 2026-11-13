@@ -5,6 +5,11 @@ export const dynamic = 'force-dynamic';
 const COOKIE = 'gs_admin_session';
 const ID = '[A-Za-z0-9_-]{1,96}';
 const allowedRoutes: Array<[RegExp, readonly string[]]> = [
+  [/^articles$/, ['GET', 'POST']],
+  [new RegExp(`^articles/${ID}$`), ['GET', 'PATCH', 'DELETE']],
+  [new RegExp(`^articles/${ID}/images/upload-signature$`), ['POST']],
+  [new RegExp(`^articles/${ID}/images/${ID}/confirm$`), ['POST']],
+  [new RegExp(`^articles/${ID}/images/${ID}$`), ['PATCH', 'DELETE']],
   [/^auth\/login$/, ['POST']],
   [/^auth\/me$/, ['GET']],
   [/^auth\/(logout|password)$/, ['POST']],
@@ -61,6 +66,10 @@ function errorMessage(status: number, path: string): string {
   if (status === 409)
     return 'Cette modification est impossible dans l’état actuel. Vérifiez les données et rechargez.';
   if (status === 429) return 'Trop de tentatives. Patientez avant de réessayer.';
+  if (path.startsWith('articles') && (status === 400 || status === 422))
+    return 'Vérifiez le titre (160 caractères maximum), le texte et la présence d’une photo pour publier. Pour retirer la dernière photo, repassez en brouillon.';
+  if (path.startsWith('articles') && status === 503)
+    return 'Le service de rédaction est indisponible. Vos changements ne sont pas confirmés ; réessayez.';
   if (status === 400 || status === 422) {
     if (path === 'auth/login') return 'Vérifiez l’identifiant et le mot de passe.';
     if (path === 'auth/password')
@@ -97,11 +106,12 @@ async function proxy(request: NextRequest, context: Context) {
   if (['POST', 'PATCH'].includes(request.method)) {
     if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json'))
       return json({ message: 'Format non autorisé.' }, 415);
-    if (Number(request.headers.get('content-length') || 0) > 32768)
+    const bodyLimit = path.startsWith('articles') ? 20 * 1024 * 1024 : 32768;
+    if (Number(request.headers.get('content-length') || 0) > bodyLimit)
       return json({ message: 'Données trop volumineuses.' }, 413);
     try {
       body = await request.text();
-      if (new TextEncoder().encode(body).byteLength > 32768)
+      if (new TextEncoder().encode(body).byteLength > bodyLimit)
         return json({ message: 'Données trop volumineuses.' }, 413);
       const parsed: unknown = JSON.parse(body);
       if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error();
@@ -114,7 +124,7 @@ async function proxy(request: NextRequest, context: Context) {
     const backend = process.env.BACKEND_URL;
     if (!backend) return json({ message: errorMessage(503, path) }, 503);
     const url = new URL(`${backend.replace(/\/$/, '')}/api/v1/admin/${path}`);
-    for (const key of ['page', 'pageSize', 'q', 'category']) {
+    for (const key of ['page', 'pageSize', 'q', 'category', 'status']) {
       const value = request.nextUrl.searchParams.get(key);
       if (value !== null) url.searchParams.set(key, value);
     }

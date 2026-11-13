@@ -8,7 +8,7 @@ test('WebGL indisponible : illustration et interactions restent présentes', asy
       },
     });
   });
-  await page.goto('/');
+  await page.goto('/accueil');
   await expect(page.getByTestId('pillar-star-stage')).toHaveAttribute('data-renderer', 'static');
   await expect(page.getByTestId('pillar-star-stage').locator('svg')).toBeVisible();
   await page.getByRole('button', { name: '02 La ville', exact: true }).click();
@@ -20,7 +20,7 @@ test('vraie scène WebGL : pause GPU, rotation et perte de contexte', async ({ b
   const page = await context.newPage();
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto('/');
+  await page.goto('/accueil');
   const host = page.getByTestId('pillar-star-stage');
   await expect(host).toHaveAttribute('data-renderer', 'webgl', { timeout: 20000 });
   const frame = () => host.locator('div[data-frame]').getAttribute('data-frame');
@@ -70,7 +70,7 @@ test('cycle automatique lent : piliers après assemblage, masqués avant sépara
   page,
 }) => {
   test.setTimeout(80000);
-  await page.goto('/');
+  await page.goto('/accueil');
   const stage = page.getByTestId('pillar-star-stage');
   await stage.scrollIntoViewIfNeeded();
   await expect(stage).toHaveAttribute('data-renderer', 'webgl', { timeout: 20000 });

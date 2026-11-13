@@ -10,7 +10,7 @@ import { Dialog } from './dialog';
 import { CollectionsMenuContent } from './collections-menu';
 import styles from './collections-menu.module.css';
 
-export function Header() {
+export function Header({ mediaPublicEnabled = false }: { mediaPublicEnabled?: boolean }) {
   const { categories } = useCategories();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -42,7 +42,7 @@ export function Header() {
   };
   return (
     <>
-      <div className="announcement">
+      <div className="announcement" role="region" aria-label="Informations Gaindé Sportif">
         <span>La fierté se porte. Au Sénégal et au-delà.</span>
         <span className="flag" role="img" aria-label="Sénégal">
           <i />
@@ -54,7 +54,12 @@ export function Header() {
         </Link>
       </div>
       <header className="site-header">
-        <Link className="brand" href="/" aria-label="Gaindé Sportif — accueil" onClick={close}>
+        <Link
+          className="brand"
+          href="/boutique"
+          aria-label="Gaindé Sportif — boutique"
+          onClick={close}
+        >
           <Image src="/images/logo.webp" width={52} height={52} alt="" priority />
           <span>
             GAINDÉ<small>SPORTIF</small>
@@ -64,9 +69,18 @@ export function Header() {
           <Link
             href="/boutique"
             className={`nav-link ${pathname.startsWith('/boutique') ? 'current' : ''}`}
+            aria-current={pathname.startsWith('/boutique') ? 'page' : undefined}
             onClick={close}
           >
             La boutique
+          </Link>
+          <Link
+            href="/accueil"
+            className={`nav-link ${pathname === '/accueil' ? 'current' : ''}`}
+            aria-current={pathname === '/accueil' ? 'page' : undefined}
+            onClick={close}
+          >
+            Accueil
           </Link>
           <div
             className="mega-anchor"
@@ -129,6 +143,16 @@ export function Header() {
           <Link href="/contact?subject=personnalisation" className="nav-link" onClick={close}>
             Votre équipe
           </Link>
+          {mediaPublicEnabled && (
+            <Link
+              href="/media"
+              className={`nav-link ${pathname.startsWith('/media') ? 'current' : ''}`}
+              aria-current={pathname.startsWith('/media') ? 'page' : undefined}
+              onClick={close}
+            >
+              Media
+            </Link>
+          )}
         </nav>
         <div className="header-actions">
           <button
@@ -183,11 +207,24 @@ export function Header() {
         className="mobile-menu-dialog"
       >
         <nav aria-label="Navigation mobile">
-          <Link href="/" onClick={close}>
-            Accueil <ArrowUpRight />
-          </Link>
-          <Link href="/boutique" onClick={close}>
+          <Link
+            href="/boutique"
+            aria-current={pathname.startsWith('/boutique') ? 'page' : undefined}
+            onClick={close}
+          >
             La boutique <ArrowUpRight />
+          </Link>
+          {mediaPublicEnabled && (
+            <Link href="/media" onClick={close}>
+              Gaindé Media
+            </Link>
+          )}
+          <Link
+            href="/accueil"
+            aria-current={pathname === '/accueil' ? 'page' : undefined}
+            onClick={close}
+          >
+            Accueil <ArrowUpRight />
           </Link>
           <p className={styles.mobileCollectionLabel}>Les collections</p>
           <div className="mobile-sub-links">
