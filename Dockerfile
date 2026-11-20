@@ -1,3 +1,4 @@
+ARG MEDIA_PUBLIC_ENABLED=true
 FROM node:22-alpine AS dependencies
 WORKDIR /app
 COPY package*.json ./
@@ -8,12 +9,13 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 ARG NEXT_PUBLIC_SITE_URL
 ARG NEXT_PUBLIC_ALLOW_INDEXING=false
-ARG MEDIA_PUBLIC_ENABLED=false
+ARG MEDIA_PUBLIC_ENABLED
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL NEXT_PUBLIC_ALLOW_INDEXING=$NEXT_PUBLIC_ALLOW_INDEXING NEXT_TELEMETRY_DISABLED=1 MEDIA_PUBLIC_ENABLED=$MEDIA_PUBLIC_ENABLED
 RUN npm run build
 FROM node:22-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1 MEDIA_PUBLIC_ENABLED=false
+ARG MEDIA_PUBLIC_ENABLED
+ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1 MEDIA_PUBLIC_ENABLED=$MEDIA_PUBLIC_ENABLED
 COPY --from=builder --chown=node:node /app/.next/standalone ./
 COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 COPY --from=builder --chown=node:node /app/public ./public
