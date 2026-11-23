@@ -161,6 +161,48 @@ test('administration : accès privé, erreur de connexion, ouverture et fermetur
   await expect(page.getByRole('heading', { name: 'Connexion', exact: true })).toBeVisible();
 });
 
+test('création admin : champs alignés et mot de passe initial de quatre caractères', async ({
+  page,
+  isMobile,
+}) => {
+  const requests = await mockAdmin(page);
+  await page.goto('/administration/comptes');
+  const username = page.getByLabel('Identifiant', { exact: true });
+  const name = page.getByLabel('Nom affiché', { exact: true });
+  const password = page.getByLabel('Mot de passe initial', { exact: true });
+  await username.fill('Éq@4');
+  await name.fill('Compte de recette');
+  await password.fill('mZ9V');
+  const [a, b, c] = await page.evaluate(async () => {
+    await document.fonts.ready;
+    return ['new-username', 'new-displayname', 'new-account-password'].map((id) => {
+      const { x, y } = document.getElementById(id)!.getBoundingClientRect();
+      return { x, y };
+    });
+  });
+  if (isMobile) {
+    expect(a.x).toBeCloseTo(b.x, 0);
+    expect(b.x).toBeCloseTo(c.x, 0);
+    expect(a.y).toBeLessThan(b.y);
+    expect(b.y).toBeLessThan(c.y);
+  } else {
+    expect(a.y).toBeCloseTo(b.y, 0);
+    expect(b.y).toBeCloseTo(c.y, 0);
+    expect(a.x).toBeLessThan(b.x);
+    expect(b.x).toBeLessThan(c.x);
+  }
+  await password.press('Tab');
+  const create = page.getByRole('button', { name: 'Créer le compte', exact: true });
+  await expect(create).toBeFocused();
+  await create.press('Enter');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Compte administrateur créé' }),
+  ).toBeVisible();
+  expect(
+    requests.find(({ path, method }) => path === 'accounts' && method === 'POST')?.body,
+  ).toMatchObject({ username: 'Éq@4', password: 'mZ9V' });
+});
+
 test('administration : brouillon, erreur réseau avec champs conservés et Cloudinary non configuré', async ({
   page,
 }) => {

@@ -84,6 +84,15 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;
   }
+  .accountGrid {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+  @media (min-width: 900px) {
+    .accountGrid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
   .field {
     display: grid;
     gap: 8px;

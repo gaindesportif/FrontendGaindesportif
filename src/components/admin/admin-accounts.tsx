@@ -169,7 +169,7 @@ export function AdminAccounts() {
                 type="password"
                 required
                 autoComplete="new-password"
-                minLength={12}
+                minLength={4}
                 maxLength={128}
                 disabled={busy}
                 aria-describedby="own-password-help"
@@ -183,14 +183,14 @@ export function AdminAccounts() {
                 type="password"
                 required
                 autoComplete="new-password"
-                minLength={12}
+                minLength={4}
                 maxLength={128}
                 disabled={busy}
               />
             </div>
           </div>
           <p className={styles.hint} id="own-password-help">
-            Au moins 12 caractères. Utilisez un mot de passe unique et conservez-le dans votre
+            Au moins 4 caractères. Utilisez un mot de passe unique et conservez-le dans votre
             gestionnaire de mots de passe.
           </p>
           <div className={styles.actions}>
@@ -209,7 +209,7 @@ export function AdminAccounts() {
               réservée au propriétaire.
             </p>
             <form onSubmit={createAccount} className={styles.form} style={{ marginTop: 20 }}>
-              <div className={styles.grid}>
+              <div className={`${styles.grid} ${styles.accountGrid}`}>
                 <div className={styles.field}>
                   <label htmlFor="new-username">Identifiant</label>
                   <input
@@ -246,14 +246,14 @@ export function AdminAccounts() {
                     name="password"
                     type="password"
                     required
-                    minLength={12}
+                    minLength={4}
                     maxLength={128}
                     autoComplete="new-password"
                     disabled={busy}
                     aria-describedby="new-password-help"
                   />
                   <p className={styles.hint} id="new-password-help">
-                    Au moins 12 caractères. À transmettre par un canal privé.
+                    Au moins 4 caractères. À transmettre par un canal privé.
                   </p>
                 </div>
               </div>
@@ -318,7 +318,7 @@ export function AdminAccounts() {
                               name="password"
                               type="password"
                               autoComplete="new-password"
-                              minLength={12}
+                              minLength={4}
                               maxLength={128}
                               disabled={busy}
                             />
