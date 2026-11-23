@@ -137,10 +137,15 @@ test('administration : accès privé, erreur de connexion, ouverture et fermetur
   page,
 }) => {
   await mockAdmin(page, { authenticated: false });
-  await page.goto('/administration');
-  await expect(page.getByRole('heading', { name: 'Accès à la boutique' })).toBeVisible();
-  await page.getByRole('link', { name: 'Se connecter', exact: true }).click();
-  await page.getByLabel('Identifiant du compte', { exact: true }).fill('recette');
+  await page.goto('/boutique');
+  await page.getByRole('link', { name: 'Espace de gestion', exact: true }).click();
+  await expect(page).toHaveURL(/\/administration\/connexion$/);
+  const heading = page.getByRole('heading', { name: 'Connexion', exact: true });
+  await expect(heading).toBeFocused();
+  await expect(heading).toBeInViewport();
+  const username = page.getByLabel('Identifiant du compte', { exact: true });
+  await expect(username).toBeInViewport();
+  await username.fill('recette');
   await page.getByLabel('Mot de passe', { exact: true }).fill('incorrect-password');
   await page.getByRole('button', { name: 'Se connecter', exact: true }).click();
   await expect(page.getByRole('main').getByRole('alert')).toContainText('incorrect');

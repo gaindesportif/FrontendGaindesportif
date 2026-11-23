@@ -45,14 +45,19 @@ export function AdminAccounts() {
     event.preventDefault();
     const form = event.currentTarget;
     const fields = new FormData(form);
+    const username = String(fields.get('username') || '').trim();
+    setSuccess('');
+    if (!/^[^\p{Cc}]{4,60}$/u.test(username)) {
+      setError('L’identifiant doit contenir de 4 à 60 caractères.');
+      return;
+    }
     setBusy(true);
     setError('');
-    setSuccess('');
     try {
       await adminFetch('accounts', {
         method: 'POST',
         body: JSON.stringify({
-          username: String(fields.get('username') || '').trim(),
+          username,
           displayName: String(fields.get('displayName') || '').trim(),
           password: fields.get('password'),
         }),
@@ -211,15 +216,16 @@ export function AdminAccounts() {
                     id="new-username"
                     name="username"
                     required
-                    minLength={3}
-                    maxLength={60}
-                    pattern="[a-z0-9][a-z0-9._-]{2,59}"
-                    title="3 à 60 caractères : lettres minuscules, chiffres, points, tirets et tirets bas."
+                    minLength={4}
+                    aria-describedby="new-username-help"
                     autoComplete="off"
                     autoCapitalize="none"
                     spellCheck={false}
                     disabled={busy}
                   />
+                  <p className={styles.hint} id="new-username-help">
+                    De 4 à 60 caractères. Vous pouvez aussi utiliser une adresse e-mail.
+                  </p>
                 </div>
                 <div className={styles.field}>
                   <label htmlFor="new-displayname">Nom affiché</label>

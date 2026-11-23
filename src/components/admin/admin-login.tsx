@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminApiError, adminError, adminFetch } from '@/lib/admin-client';
@@ -12,6 +12,10 @@ export function AdminLogin() {
   const { user, refresh } = useAdminSession();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (!user) titleRef.current?.focus();
+  }, [user]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -38,7 +42,9 @@ export function AdminLogin() {
   return (
     <section className={`${styles.panel} ${styles.narrow}`}>
       <p className={styles.eyebrow}>Gestion de la boutique</p>
-      <h1 className={styles.title}>Connexion</h1>
+      <h1 className={styles.title} ref={titleRef} tabIndex={-1}>
+        Connexion
+      </h1>
       {user ? (
         <>
           <p>Votre session est ouverte.</p>
@@ -59,7 +65,6 @@ export function AdminLogin() {
               autoComplete="username"
               required
               minLength={3}
-              maxLength={60}
               disabled={busy}
               autoCapitalize="none"
               spellCheck={false}

@@ -60,6 +60,10 @@ export function AdminSession({ children }: { children: ReactNode }) {
     };
   }, []);
   const loginPage = pathname === '/administration/connexion';
+  const redirectToLogin = pathname === '/administration' && !loading && !user && !error;
+  useEffect(() => {
+    if (redirectToLogin) router.replace('/administration/connexion', { scroll: true });
+  }, [redirectToLogin, router]);
   async function logout() {
     setLoggingOut(true);
     setError('');
@@ -130,7 +134,7 @@ export function AdminSession({ children }: { children: ReactNode }) {
             {error}
           </p>
         )}
-        {loading ? (
+        {loading || redirectToLogin ? (
           <p role="status" className={styles.panel}>
             Vérification de votre session…
           </p>
