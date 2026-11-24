@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { adminError, adminFetch, type AdminUser } from '@/lib/admin-client';
 import { useAdminSession } from './admin-session';
+import { PasswordInput } from '../password-input';
 import styles from './admin.module.css';
 
 export function AdminAccounts() {
@@ -151,10 +152,10 @@ export function AdminAccounts() {
           <div className={styles.grid}>
             <div className={styles.field}>
               <label htmlFor="own-current-password">Mot de passe actuel</label>
-              <input
+              <PasswordInput
                 id="own-current-password"
                 name="currentPassword"
-                type="password"
+                label="Mot de passe actuel"
                 required
                 autoComplete="current-password"
                 maxLength={128}
@@ -163,10 +164,10 @@ export function AdminAccounts() {
             </div>
             <div className={styles.field}>
               <label htmlFor="own-new-password">Nouveau mot de passe</label>
-              <input
+              <PasswordInput
                 id="own-new-password"
                 name="newPassword"
-                type="password"
+                label="Nouveau mot de passe"
                 required
                 autoComplete="new-password"
                 minLength={4}
@@ -177,10 +178,10 @@ export function AdminAccounts() {
             </div>
             <div className={styles.field}>
               <label htmlFor="own-confirm-password">Confirmer le nouveau mot de passe</label>
-              <input
+              <PasswordInput
                 id="own-confirm-password"
                 name="confirmPassword"
-                type="password"
+                label="Confirmer le nouveau mot de passe"
                 required
                 autoComplete="new-password"
                 minLength={4}
@@ -241,10 +242,10 @@ export function AdminAccounts() {
                 </div>
                 <div className={styles.field}>
                   <label htmlFor="new-account-password">Mot de passe initial</label>
-                  <input
+                  <PasswordInput
                     id="new-account-password"
                     name="password"
-                    type="password"
+                    label="Mot de passe initial"
                     required
                     minLength={4}
                     maxLength={128}
@@ -313,10 +314,10 @@ export function AdminAccounts() {
                             <label htmlFor={`password-${account.id}`}>
                               Nouveau mot de passe de {account.username}
                             </label>
-                            <input
+                            <PasswordInput
                               id={`password-${account.id}`}
                               name="password"
-                              type="password"
+                              label={`Nouveau mot de passe de ${account.username}`}
                               autoComplete="new-password"
                               minLength={4}
                               maxLength={128}

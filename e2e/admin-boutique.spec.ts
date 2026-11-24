@@ -191,7 +191,22 @@ test('création admin : champs alignés et mot de passe initial de quatre caract
     expect(a.x).toBeLessThan(b.x);
     expect(b.x).toBeLessThan(c.x);
   }
+  await expect(password).toHaveAttribute('type', 'password');
   await password.press('Tab');
+  const eye = page.getByRole('button', { name: 'Afficher mot de passe initial', exact: true });
+  await expect(eye).toBeFocused();
+  await eye.press('Space');
+  await expect(password).toHaveAttribute('type', 'text');
+  await expect(password).toHaveValue('mZ9V');
+  await expect(page.getByLabel('Mot de passe actuel', { exact: true })).toHaveAttribute(
+    'type',
+    'password',
+  );
+  const hide = page.getByRole('button', { name: 'Masquer mot de passe initial', exact: true });
+  await hide.press('Space');
+  await expect(password).toHaveAttribute('type', 'password');
+  expect(requests.some(({ path, method }) => path === 'accounts' && method === 'POST')).toBe(false);
+  await eye.press('Tab');
   const create = page.getByRole('button', { name: 'Créer le compte', exact: true });
   await expect(create).toBeFocused();
   await create.press('Enter');

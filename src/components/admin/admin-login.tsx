@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminApiError, adminError, adminFetch } from '@/lib/admin-client';
 import { useAdminSession } from './admin-session';
+import { PasswordInput } from '../password-input';
 import styles from './admin.module.css';
 
 export function AdminLogin() {
@@ -72,10 +73,10 @@ export function AdminLogin() {
           </div>
           <div className={styles.field}>
             <label htmlFor="admin-password">Mot de passe</label>
-            <input
+            <PasswordInput
               id="admin-password"
               name="password"
-              type="password"
+              label="Mot de passe"
               autoComplete="current-password"
               required
               maxLength={200}
