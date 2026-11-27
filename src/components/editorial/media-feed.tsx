@@ -9,6 +9,7 @@ import {
   articleListSchema,
   type ArticleCard,
 } from '@/lib/editorial';
+import { MediaSubscribe } from './media-subscribe';
 import styles from './editorial.module.css';
 export function MediaFeed({
   initialQuery = { q: '', category: '', page: 1 },
@@ -63,6 +64,7 @@ export function MediaFeed({
         <div>
           <h1 className={styles.title}>Gaindé Media</h1>
           <p className={styles.intro}>La voix du sport.</p>
+          <MediaSubscribe />
         </div>
         <form
           className={`${styles.search} ${styles.feedSearch}`}
@@ -94,7 +96,7 @@ export function MediaFeed({
           {q && (
             <button
               type="button"
-              className={styles.secondary}
+              className={`${styles.secondary} button-fill`}
               onClick={() => {
                 setLoading(true);
                 setError('');
@@ -109,13 +111,17 @@ export function MediaFeed({
         </form>
       </header>
       <nav className={styles.filters} aria-label="Rubriques des articles">
-        <button className={styles.filter} aria-pressed={!category} onClick={() => choose('')}>
+        <button
+          className={`${styles.filter} button-fill`}
+          aria-pressed={!category}
+          onClick={() => choose('')}
+        >
           Tous les récits
         </button>
         {Object.entries(articleCategories).map(([key, label]) => (
           <button
             key={key}
-            className={styles.filter}
+            className={`${styles.filter} button-fill`}
             aria-pressed={key === category}
             onClick={() => choose(key)}
           >
@@ -131,7 +137,7 @@ export function MediaFeed({
         <div role="alert" className={`${styles.notice} ${styles.error}`}>
           <p>{error}</p>
           <button
-            className={styles.secondary}
+            className={`${styles.secondary} button-fill`}
             onClick={() => (setLoading(true), setError(''), setRetry((v) => v + 1))}
           >
             Réessayer
@@ -202,7 +208,7 @@ export function MediaFeed({
           {total > 12 && (
             <nav className={styles.pagination} aria-label="Pages des publications">
               <button
-                className={styles.secondary}
+                className={`${styles.secondary} button-fill`}
                 disabled={page === 1}
                 onClick={() => (setLoading(true), setError(''), setPage((v) => v - 1))}
               >
@@ -212,7 +218,7 @@ export function MediaFeed({
                 Page {page} sur {Math.ceil(total / 12)}
               </span>
               <button
-                className={styles.secondary}
+                className={`${styles.secondary} button-fill`}
                 disabled={page * 12 >= total}
                 onClick={() => (setLoading(true), setError(''), setPage((v) => v + 1))}
               >

@@ -12,6 +12,9 @@ import {
 } from '@/lib/catalogue';
 import { useCatalogueResource } from './use-catalogue-resource';
 import { CatalogueState } from './catalogue-state';
+import { type Flocking } from '@/lib/jersey-flocking';
+import { JerseyFlocking } from './jersey-flocking';
+import { getExactJerseyPreview } from './jersey-preview-assets';
 import { CatalogueImage } from './catalogue-image';
 import styles from './catalogue.module.css';
 import { SaveProductButton } from './save-product-button';
@@ -67,13 +70,29 @@ function ProductRequest({ product }: { product: PublicProduct }) {
   const [size, setSize] = useState('');
   const [color, setColor] = useState('');
   const [quantity, setQuantity] = useState('1');
+  const [withFlocking, setWithFlocking] = useState(false);
+  const [flocking, setFlocking] = useState<Flocking>({ name: '', number: '' });
+  const isJersey = product.category === 'maillots';
+  const flockingPrice = isJersey ? product.flockingPriceXof : null;
+  const includeFlocking = Boolean(flockingPrice && withFlocking);
+  const unitPrice = product.priceXof + (includeFlocking ? flockingPrice! : 0);
+  const previewColor = color || (product.colors.length === 1 ? product.colors[0] : '');
   const [origin] = useState(() => (typeof window === 'undefined' ? '' : window.location.origin));
   const maximum = Math.min(99, product.stockQuantity);
   const amount = Number(quantity);
   const validQuantity = Number.isInteger(amount) && amount >= 1 && amount <= maximum;
   // L'URL publique courante est obtenue après hydratation ; aucun secret de configuration exposé.
   const whatsapp = origin
-    ? productWhatsappUrl(product, { quantity: amount, size, color }, origin)
+    ? productWhatsappUrl(
+        product,
+        {
+          quantity: amount,
+          size,
+          color,
+          flocking: isJersey ? (includeFlocking ? flocking : null) : undefined,
+        },
+        origin,
+      )
     : null;
   function rememberWhatsapp() {
     if (status !== 'authenticated' || !user || !whatsapp) return;
@@ -87,6 +106,7 @@ function ProductRequest({ product }: { product: PublicProduct }) {
         quantity: amount,
         ...(size ? { size } : {}),
         ...(color ? { color } : {}),
+        ...(includeFlocking ? { withFlocking: true } : {}),
         requestKey: crypto.randomUUID(),
       }),
     })
@@ -149,6 +169,19 @@ function ProductRequest({ product }: { product: PublicProduct }) {
           </select>
         </div>
       )}
+      {!!flockingPrice && (
+        <JerseyFlocking
+          priceXof={flockingPrice}
+          enabled={withFlocking}
+          flocking={flocking}
+          exactPreview={getExactJerseyPreview(product.id, previewColor)}
+          productColor={previewColor}
+          fallbackColor={product.previewColor}
+          selectProductColor={product.colors.length > 1 && !color}
+          onToggle={setWithFlocking}
+          onChange={setFlocking}
+        />
+      )}
       <div className={styles.quantity}>
         <label htmlFor="product-quantity">Quantité souhaitée</label>
         <div className={styles.quantityControl}>
@@ -197,7 +230,7 @@ function ProductRequest({ product }: { product: PublicProduct }) {
         )}
         {validQuantity && (
           <p>
-            Sous-total produits : <strong>{formatXof(product.priceXof * amount)}</strong>
+            Sous-total produits : <strong>{formatXof(unitPrice * amount)}</strong>
           </p>
         )}
         {whatsapp ? (
@@ -295,11 +328,10 @@ export function CatalogueProduct({ slug }: { slug: string }) {
               product={resource.data}
             />
             <details className={styles.details}>
-              <summary>Commander et personnaliser</summary>
+              <summary>Comment commander</summary>
               <p>
                 La demande est préparée avec le produit, son prix affiché et vos choix. Les tailles
-                et couleurs proposées sont à confirmer avec notre équipe. Pour un flocage ou une
-                personnalisation, précisez votre besoin dans la conversation WhatsApp.
+                et couleurs proposées sont à confirmer avec notre équipe.
               </p>
             </details>
           </div>

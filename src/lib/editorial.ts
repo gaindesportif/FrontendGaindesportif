@@ -52,3 +52,12 @@ export const articleDate = (value: string | null) =>
     : '';
 export const readingMinutes = (text: string) =>
   Math.max(1, Math.ceil(text.trim().split(/\s+/u).filter(Boolean).length / 220));
+
+export function articleShareImage(source: string) {
+  const image = new URL(source);
+  const upload = image.pathname.match(/^\/[\w-]+\/image\/upload\//);
+  if (!upload) return image.href;
+  image.pathname =
+    upload[0] + 'c_pad,b_auto,w_1200,h_630,f_jpg,q_auto/' + image.pathname.slice(upload[0].length);
+  return image.href;
+}

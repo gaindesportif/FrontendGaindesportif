@@ -50,7 +50,7 @@ function ResourceError({ message, retry }: { message: string; retry: () => void 
   return (
     <div className={styles.error} role="alert">
       <p>{message}</p>
-      <button className={styles.secondary} onClick={retry}>
+      <button className={`${styles.secondary} button-fill`} onClick={retry}>
         Réessayer
       </button>
     </div>
@@ -208,7 +208,7 @@ function BrowsingHistory({ userId }: { userId: string }) {
           <p className={styles.description}>Retrouvez vos dernières fiches produit consultées.</p>
         </div>
         {data && data.items.length > 0 && (
-          <button className={styles.secondary} disabled={pending} onClick={() => void mutate()}>
+          <button className={`${styles.secondary} button-fill`} disabled={pending} onClick={() => void mutate()}>
             <Trash2 size={16} aria-hidden="true" />
             Effacer mon historique
           </button>
@@ -279,7 +279,7 @@ function WhatsappRequests({ userId }: { userId: string }) {
           Mes demandes WhatsApp
         </h2>
         {data && data.items.length > 0 && (
-          <button className={styles.secondary} disabled={pending} onClick={() => void clear()}>
+          <button className={`${styles.secondary} button-fill`} disabled={pending} onClick={() => void clear()}>
             <Trash2 size={16} aria-hidden="true" />
             Effacer mes demandes
           </button>
@@ -379,7 +379,7 @@ function EmailVerification({ user }: { user: CustomerUser }) {
   ) : (
     <div className={styles.notice}>
       <p>Confirmez votre adresse e-mail pour recevoir les nouvelles de vos demandes.</p>
-      <button className={styles.secondary} onClick={() => void resend()} disabled={pending}>
+      <button className={`${styles.secondary} button-fill`} onClick={() => void resend()} disabled={pending}>
         {pending ? 'Envoi…' : 'Recevoir le lien de confirmation'}
       </button>
       {message && <p role="status">{message}</p>}
@@ -538,7 +538,7 @@ function Profile({ user }: { user: CustomerUser }) {
                 {pending === 'delete' ? 'Suppression…' : 'Confirmer la suppression'}
               </button>
               <button
-                className={styles.secondary}
+                className={`${styles.secondary} button-fill`}
                 type="button"
                 onClick={() => setDeleting(false)}
                 disabled={Boolean(pending)}
@@ -599,7 +599,7 @@ export function AccountDashboard() {
             <Link className={styles.primary} href="/compte/connexion">
               Me connecter
             </Link>
-            <Link className={styles.secondary} href="/compte/inscription">
+            <Link className={`${styles.secondary} button-fill`} href="/compte/inscription">
               Créer mon compte
             </Link>
           </div>
@@ -613,7 +613,7 @@ export function AccountDashboard() {
               <p className={styles.description}>Vos coups de cœur et vos prochaines découvertes.</p>
             </div>
             <button
-              className={styles.secondary}
+              className={`${styles.secondary} button-fill`}
               onClick={() => void signOut()}
               disabled={loggingOut}
             >

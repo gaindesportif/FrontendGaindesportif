@@ -29,7 +29,7 @@ test('vraie scène WebGL : pause GPU, rotation et perte de contexte', async ({ b
   await expect
     .poll(
       async () => Number(await host.locator('div[data-expansion]').getAttribute('data-expansion')),
-      { timeout: 15000 },
+      { timeout: 22000 },
     )
     .toBeLessThan(0.02);
   await page.getByRole('button', { name: '02 La ville', exact: true }).click();
@@ -66,17 +66,51 @@ test('vraie scène WebGL : pause GPU, rotation et perte de contexte', async ({ b
   await context.close();
 });
 
-test('cycle automatique lent : piliers après assemblage, masqués avant séparation, pause et retour', async ({
+test('lion : ballon, rugissement et retours par pilier avant la reprise du cycle', async ({
   page,
 }) => {
-  test.setTimeout(80000);
+  test.setTimeout(125000);
+  await page.addInitScript(() => {
+    const start = AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start = function (...args: Parameters<typeof start>) {
+      start.apply(this, args);
+      queueMicrotask(() => {
+        const scene = document.querySelector<HTMLElement>('[data-lion-time]');
+        document.documentElement.dataset.lionSound = scene?.dataset.lionAction || '';
+      });
+    };
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        if (!(record.target instanceof HTMLElement)) continue;
+        const { lionObject, lionAction } = record.target.dataset;
+        if (!lionObject || !lionAction) continue;
+        document.documentElement.dataset.lionStory = [
+          ...new Set(
+            (document.documentElement.dataset.lionStory || '')
+              .split(' ')
+              .filter(Boolean)
+              .concat(lionObject + ':' + lionAction),
+          ),
+        ].join(' ');
+      }
+    });
+    observer.observe(document, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-lion-object', 'data-lion-action'],
+    });
+  });
   await page.goto('/accueil');
   const stage = page.getByTestId('pillar-star-stage');
   await stage.scrollIntoViewIfNeeded();
   await expect(stage).toHaveAttribute('data-renderer', 'webgl', { timeout: 20000 });
   const hero = page.getByTestId('cinematic-hero');
-  const scene = stage.locator('div[data-phase]');
+  const scene = stage.locator('div[data-frame]');
+  await expect(stage.getByRole('button', { name: /Rejouer|Son du lion/ })).toHaveCount(0);
   await expect(hero).toHaveAttribute('data-pillars-visible', 'false');
+  // Un geste sur le décor débloque le son dans les navigateurs dont la lecture automatique est bloquée.
+  await stage.click({ position: { x: 24, y: 24 } });
+  await expect(page.locator('html')).toHaveAttribute('data-lion-sound', 'roar', { timeout: 12000 });
   await expect(hero).toHaveAttribute('data-phase', 'assembled', { timeout: 15000 });
   await expect(hero).toHaveAttribute('data-pillars-visible', 'true');
   const kids = page.locator('button[data-pillar="kids"]');
@@ -90,7 +124,26 @@ test('cycle automatique lent : piliers après assemblage, masqués avant sépara
   await page.getByRole('button', { name: 'Reprendre les animations', exact: true }).click();
   // Aucun survol involontaire ne maintient les légendes pendant la recette.
   await page.mouse.move(1, 1);
-  await expect(hero).toHaveAttribute('data-pillars-visible', 'false', { timeout: 30000 });
+  await expect
+    .poll(
+      async () =>
+        (await page.locator('html').getAttribute('data-lion-story'))
+          ?.split(' ')
+          .filter((step) => step.endsWith(':throw')),
+      { timeout: 50000 },
+    )
+    .toEqual([
+      'ball:throw',
+      'tech:throw',
+      'infra:throw',
+      'event:throw',
+      'media:throw',
+      'kids:throw',
+    ]);
+  const steps = (await page.locator('html').getAttribute('data-lion-story'))!.split(' ');
+  expect(steps.indexOf('ball:roar')).toBeGreaterThan(steps.indexOf('ball:throw'));
+  expect(steps.indexOf('ball:roar')).toBeLessThan(steps.indexOf('tech:throw'));
+  await expect(hero).toHaveAttribute('data-pillars-visible', 'false', { timeout: 40000 });
   await expect(kids).toHaveCSS('opacity', '0');
   await expect(
     page.getByRole('group', { name: 'Explorer les cinq piliers', exact: true }),

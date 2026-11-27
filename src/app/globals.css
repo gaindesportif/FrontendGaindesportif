@@ -181,6 +181,30 @@
     border-color: var(--line);
     justify-content: center;
   }
+  :is(.button-outline, .button-light, .button-fill) {
+    background-image: linear-gradient(var(--ink), var(--ink));
+    background-position: left center;
+    background-repeat: no-repeat;
+    background-size: 0% 100%;
+    transition:
+      background-size 0.36s ease,
+      color 0.18s ease,
+      border-color 0.3s ease;
+  }
+  :is(.button-outline, .button-light, .button-fill):not(:disabled):not([aria-pressed='true']):is(
+      :hover,
+      :focus-visible
+    ) {
+    background-size: 100% 100%;
+    color: white;
+    border-color: var(--ink);
+    transition-delay: 0s, 0.19s, 0s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :is(.button-outline, .button-light, .button-fill) {
+      transition: none !important;
+    }
+  }
   .text-link {
     display: inline-flex;
     gap: 20px;

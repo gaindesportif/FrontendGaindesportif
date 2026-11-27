@@ -40,3 +40,37 @@ self.addEventListener('fetch', (event) => {
   if (PUBLIC_RESOURCES.includes(url.pathname))
     event.respondWith(caches.match(request).then((cached) => cached || fetch(request)));
 });
+
+self.addEventListener('push', (event) => {
+  let notice;
+  try {
+    notice = event.data?.json();
+  } catch {
+    return;
+  }
+  if (typeof notice?.title !== 'string' || !/^\/media\/[a-z0-9-]{1,200}$/.test(notice.path)) return;
+  event.waitUntil(
+    self.registration.showNotification(notice.title, {
+      body: 'Nouvel article de Gaindé Media',
+      tag: notice.path,
+      silent: false,
+      icon: '/icons/icon-192.png',
+      data: { path: notice.path },
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  const path = event.notification.data?.path;
+  if (path !== '/media' && !/^\/media\/[a-z0-9-]{1,200}$/.test(path)) return;
+  event.notification.close();
+  event.waitUntil(
+    (async () => {
+      const url = new URL(path, self.location.origin).href;
+      for (const client of await self.clients.matchAll({ type: 'window' })) {
+        if (client.url === url) return client.focus();
+      }
+      return self.clients.openWindow(url);
+    })(),
+  );
+});

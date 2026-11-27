@@ -5,9 +5,10 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArticleNotFound, getArticle, mediaPublicEnabled } from '@/lib/editorial.server';
-import { articleCategories, articleDate, readingMinutes } from '@/lib/editorial';
+import { articleCategories, articleDate, articleShareImage, readingMinutes } from '@/lib/editorial';
 import { ArticleBody } from '@/components/editorial/article-body';
 import { ArticleShare } from '@/components/editorial/article-share';
+import { MediaSubscribe } from '@/components/editorial/media-subscribe';
 import styles from '@/components/editorial/editorial.module.css';
 export const dynamic = 'force-dynamic';
 const read = cache(async (slug: string) => getArticle(slug, await headers()));
@@ -16,18 +17,38 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!mediaPublicEnabled()) return { robots: { index: false, follow: false } };
   try {
     const a = await read((await params).slug);
+    const path = `/media/${a.slug}`;
+    const description = a.excerpt || a.body.slice(0, 155);
+    const photo = a.images[0];
+    const url = photo ? articleShareImage(photo.url) : undefined;
+    const image =
+      url && photo
+        ? {
+            url,
+            alt: photo.alt || a.title,
+            ...(url !== photo.url ? { width: 1200, height: 630, type: 'image/jpeg' } : {}),
+          }
+        : undefined;
     return {
       title: a.title,
-      description: a.excerpt || a.body.slice(0, 155),
-      alternates: { canonical: `/media/${a.slug}` },
+      description,
+      alternates: { canonical: path },
       openGraph: {
         title: a.title,
-        description: a.excerpt || a.body.slice(0, 155),
+        description,
+        ...(process.env.NEXT_PUBLIC_SITE_URL ? { url: path } : {}),
+        siteName: 'Gaindé Media',
         type: 'article',
         publishedTime: a.publishedAt || undefined,
         modifiedTime: a.updatedAt,
         ...(a.author ? { authors: [a.author] } : {}),
-        images: a.images.slice(0, 1).map((i) => ({ url: i.url, alt: i.alt || a.title })),
+        images: image ? [image] : [],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: a.title,
+        description,
+        images: image ? [image] : [],
       },
     };
   } catch {
@@ -47,10 +68,10 @@ export default async function ArticlePage({ params }: Props) {
         <p className={styles.notice}>
           Votre connexion ou le service ne répond pas. Réessayez dans un instant.
         </p>
-        <Link className={styles.secondary} href={`/media/${(await params).slug}`}>
+        <Link className={`${styles.secondary} button-fill`} href={`/media/${(await params).slug}`}>
           Réessayer
         </Link>
-        <Link className={styles.secondary} href="/media">
+        <Link className={`${styles.secondary} button-fill`} href="/media">
           Toutes les publications
         </Link>
       </section>
@@ -98,7 +119,12 @@ export default async function ArticlePage({ params }: Props) {
             <br />
             les histoires.
           </p>
-          <ArticleShare title={a.title} />
+          <ArticleShare
+            title={a.title}
+            path={`/media/${a.slug}`}
+            image={a.images[0] ? articleShareImage(a.images[0].url) : undefined}
+          />
+          <MediaSubscribe />
         </aside>
         <div>
           <ArticleBody body={a.body} />
@@ -120,7 +146,7 @@ export default async function ArticlePage({ params }: Props) {
               )}
             </figure>
           ))}
-          <Link className={styles.secondary} href="/media">
+          <Link className={`${styles.secondary} button-fill`} href="/media">
             Continuer la lecture →
           </Link>
         </div>

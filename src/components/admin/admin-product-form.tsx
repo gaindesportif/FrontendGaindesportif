@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Dialog } from '@/components/dialog';
 import { useCategories } from '@/components/catalogue/categories-provider';
 import { adminError, adminFetch, formatAdminPrice, type AdminProduct } from '@/lib/admin-client';
+import { jerseyColors } from '@/components/catalogue/jersey-preview-assets';
 import { AdminProductMedia } from './admin-product-media';
 import styles from './admin.module.css';
 
@@ -18,6 +19,8 @@ type Fields = {
   stockQuantity: number | null;
   sizes: string[];
   colors: string[];
+  previewColor?: string | null;
+  flockingPriceXof?: number | null;
 };
 export function AdminProductForm({ id }: { id?: string }) {
   const router = useRouter();
@@ -94,7 +97,8 @@ export function AdminProductForm({ id }: { id?: string }) {
       (id ? 'preview' : 'continue');
     const data = new FormData(event.currentTarget);
     const price = String(data.get('priceXof') || '').trim(),
-      stock = String(data.get('stockQuantity') || '').trim();
+      stock = String(data.get('stockQuantity') || '').trim(),
+      flockingPrice = String(data.get('flockingPriceXof') || '').trim();
     const list = (key: string) => [
       ...new Set(
         String(data.get(key) || '')
@@ -111,6 +115,12 @@ export function AdminProductForm({ id }: { id?: string }) {
       stockQuantity: stock ? Number(stock) : null,
       sizes: list('sizes'),
       colors: list('colors'),
+      ...(category === 'maillots'
+        ? {
+            previewColor: String(data.get('previewColor') || '') || null,
+            flockingPriceXof: flockingPrice ? Number(flockingPrice) : null,
+          }
+        : {}),
     };
     setError('');
     setSuccess('');
@@ -217,14 +227,14 @@ export function AdminProductForm({ id }: { id?: string }) {
     return (
       <div role="alert" className={styles.error}>
         {error || 'Produit indisponible.'}
-        <button className={styles.secondary} onClick={() => void load()}>
+        <button className={`${styles.secondary} button-fill`} onClick={() => void load()}>
           Réessayer
         </button>
       </div>
     );
   return (
     <>
-      <Link className={styles.secondary} href="/administration">
+      <Link className={`${styles.secondary} button-fill`} href="/administration">
         ← Tous les produits
       </Link>
       <h1 className={styles.title}>{id ? 'Préparer le produit' : 'Ajouter un produit'}</h1>
@@ -287,7 +297,7 @@ export function AdminProductForm({ id }: { id?: string }) {
                     </select>
                     <button
                       type="button"
-                      className={styles.secondary}
+                      className={`${styles.secondary} button-fill`}
                       onClick={() => {
                         setCategoryError('');
                         setCategoryOpen(true);
@@ -353,6 +363,47 @@ export function AdminProductForm({ id }: { id?: string }) {
                       Séparez les couleurs par une virgule. Indiquez les choix réellement proposés.
                     </p>
                   </div>
+                  {category === 'maillots' && (
+                    <div className={styles.field}>
+                      <label htmlFor="flocking-price">Prix du flocage (F CFA)</label>
+                      <input
+                        id="flocking-price"
+                        name="flockingPriceXof"
+                        type="number"
+                        min={1}
+                        max={2147483647}
+                        step={1}
+                        defaultValue={product?.flockingPriceXof ?? ''}
+                        aria-describedby="flocking-price-hint"
+                      />
+                      <p id="flocking-price-hint" className={styles.hint}>
+                        Supplément par maillot. Laissez ce champ vide si le flocage est
+                        indisponible.
+                      </p>
+                    </div>
+                  )}
+                  {category === 'maillots' && (
+                    <div className={styles.field}>
+                      <label htmlFor="preview-color">
+                        Couleur réelle du maillot pour l’aperçu 3D
+                      </label>
+                      <select
+                        id="preview-color"
+                        name="previewColor"
+                        defaultValue={product?.previewColor ?? ''}
+                      >
+                        <option value="">Utiliser la couleur du produit</option>
+                        {jerseyColors.map(({ name }) => (
+                          <option key={name}>{name}</option>
+                        ))}
+                      </select>
+                      <p className={styles.hint}>
+                        Renseignez-la quand la fiche indique seulement « Originale ». Une couleur
+                        précise choisie par le client dans les variantes du produit reste
+                        prioritaire.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </fieldset>
               {error && !preview && (
@@ -380,7 +431,7 @@ export function AdminProductForm({ id }: { id?: string }) {
                 </button>
                 {id && (product?.status !== 'published' || product.publicationReady === false) && (
                   <button
-                    className={styles.secondary}
+                    className={`${styles.secondary} button-fill`}
                     type="submit"
                     value="save"
                     disabled={busy || mediaBusy}
@@ -390,11 +441,14 @@ export function AdminProductForm({ id }: { id?: string }) {
                 )}
                 {product?.status === 'published' && product.publicationReady !== false && (
                   <>
-                    <Link className={styles.secondary} href={`/boutique/${product.slug}`}>
+                    <Link
+                      className={`${styles.secondary} button-fill`}
+                      href={`/boutique/${product.slug}`}
+                    >
                       Voir le produit
                     </Link>
                     <button
-                      className={styles.secondary}
+                      className={`${styles.secondary} button-fill`}
                       type="button"
                       disabled={busy || mediaBusy}
                       onClick={() => void withdraw()}
@@ -506,7 +560,11 @@ export function AdminProductForm({ id }: { id?: string }) {
               </p>
             )}
             <div className={styles.actions}>
-              <button className={styles.secondary} disabled={busy} onClick={() => setPreview(null)}>
+              <button
+                className={`${styles.secondary} button-fill`}
+                disabled={busy}
+                onClick={() => setPreview(null)}
+              >
                 Revenir aux modifications
               </button>
               <button className={styles.button} disabled={busy} onClick={() => void publish()}>

@@ -116,14 +116,14 @@ export function AdminProducts() {
           type="search"
           maxLength={120}
         />
-        <button className={styles.secondary} type="submit" disabled={loading}>
+        <button className={`${styles.secondary} button-fill`} type="submit" disabled={loading}>
           Rechercher
         </button>
       </form>
       {error && (
         <div role="alert" className={styles.error}>
           {error}{' '}
-          <button className={styles.secondary} onClick={() => void load()}>
+          <button className={`${styles.secondary} button-fill`} onClick={() => void load()}>
             Réessayer
           </button>
         </div>
@@ -190,7 +190,7 @@ export function AdminProducts() {
                   <div className={styles.actions}>
                     {product.status !== 'deleting' && (
                       <Link
-                        className={styles.secondary}
+                        className={`${styles.secondary} button-fill`}
                         href={`/administration/produits/${product.id}`}
                       >
                         Modifier
@@ -210,7 +210,7 @@ export function AdminProducts() {
             </p>
             <div className={styles.actions}>
               <button
-                className={styles.secondary}
+                className={`${styles.secondary} button-fill`}
                 disabled={page <= 1}
                 onClick={() => {
                   setLoading(true);
@@ -220,7 +220,7 @@ export function AdminProducts() {
                 Précédente
               </button>
               <button
-                className={styles.secondary}
+                className={`${styles.secondary} button-fill`}
                 disabled={page * result.pageSize >= result.total}
                 onClick={() => {
                   setLoading(true);
@@ -249,7 +249,7 @@ export function AdminProducts() {
           <button className={styles.danger} onClick={deleteProduct} disabled={deleting}>
             {deleting ? 'Suppression…' : 'Confirmer la suppression'}
           </button>
-          <button className={styles.secondary} onClick={() => setRemove(null)} disabled={deleting}>
+          <button className={`${styles.secondary} button-fill`} onClick={() => setRemove(null)} disabled={deleting}>
             Annuler
           </button>
         </div>

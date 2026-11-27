@@ -341,7 +341,7 @@ export function AdminAccounts() {
                         </label>
                       }
                       <div className={styles.actions}>
-                        <button className={styles.secondary} type="submit" disabled={busy}>
+                        <button className={`${styles.secondary} button-fill`} type="submit" disabled={busy}>
                           Enregistrer le compte
                         </button>
                       </div>
@@ -351,7 +351,7 @@ export function AdminAccounts() {
               </div>
             )}
             <button
-              className={styles.secondary}
+              className={`${styles.secondary} button-fill`}
               disabled={loading || busy}
               onClick={() => void load()}
               style={{ marginTop: 20 }}

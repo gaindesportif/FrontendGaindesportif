@@ -99,7 +99,7 @@ export function AdminCustomerRequests() {
       </p>
       <div className={styles.actions}>
         <button
-          className={styles.secondary}
+          className={`${styles.secondary} button-fill`}
           disabled={pending}
           onClick={() => setRevision((v) => v + 1)}
         >
@@ -150,7 +150,7 @@ export function AdminCustomerRequests() {
               {transitions[entry.processingStatus].map((status) => (
                 <button
                   key={status}
-                  className={styles.secondary}
+                  className={`${styles.secondary} button-fill`}
                   onClick={() => {
                     setError('');
                     setChoice({ entry, status });
@@ -166,7 +166,7 @@ export function AdminCustomerRequests() {
       {data && (
         <div className={styles.actions}>
           <button
-            className={styles.secondary}
+            className={`${styles.secondary} button-fill`}
             disabled={page === 1}
             onClick={() => {
               setData(null);
@@ -179,7 +179,7 @@ export function AdminCustomerRequests() {
             Page {page} · {data.total} demande(s)
           </span>
           <button
-            className={styles.secondary}
+            className={`${styles.secondary} button-fill`}
             disabled={page * 20 >= data.total}
             onClick={() => {
               setData(null);
@@ -216,7 +216,7 @@ export function AdminCustomerRequests() {
             )}
             <div className={styles.actions}>
               <button
-                className={styles.secondary}
+                className={`${styles.secondary} button-fill`}
                 disabled={pending}
                 onClick={() => setChoice(null)}
               >

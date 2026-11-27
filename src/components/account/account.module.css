@@ -144,7 +144,7 @@
   }
   .secondary {
     border: 1px solid #b8c1b5;
-    background: transparent;
+    background-color: transparent;
   }
   .danger {
     border: 1px solid #ba6e60;

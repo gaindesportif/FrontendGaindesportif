@@ -1,5 +1,10 @@
 import * as THREE from 'three';
-import { starSequence, type StarPhase } from './pillar-star-sequence';
+import {
+  lionSequence,
+  narratedStarSequence,
+  type LionFrame,
+  type StarPhase,
+} from './pillar-star-sequence';
 
 export type PillarStarPalette = 'terrain' | 'ville' | 'identite';
 export interface PillarStarScene {
@@ -16,6 +21,7 @@ export function createPillarStarScene(
   host: HTMLElement,
   failed: () => void,
   phaseChanged: (phase: StarPhase) => void,
+  lionFrame: (frame: LionFrame) => void,
 ): PillarStarScene {
   const renderer = new THREE.WebGLRenderer({
     alpha: true,
@@ -154,13 +160,13 @@ export function createPillarStarScene(
       ),
     ),
   );
+  const target = new THREE.Vector3();
   let phase: StarPhase = 'static';
   let holding = false;
   let playing = false,
     disposed = false,
     frame = 0,
     last = 0,
-    elapsed = 0,
     sequenceElapsed = 0,
     targetTurn = 0,
     turn = 0,
@@ -171,23 +177,49 @@ export function createPillarStarScene(
     if (disposed) return;
     const dt = time !== undefined && last ? Math.max(0, Math.min((time - last) / 1000, 0.05)) : 0;
     if (time !== undefined) last = time;
-    if (playing) elapsed += dt;
     const ease = playing ? 1 - Math.exp(-dt * 6) : 0;
     if (playing && !holding) sequenceElapsed += dt;
-    const sequence = starSequence(sequenceElapsed);
+    const sequence = narratedStarSequence(sequenceElapsed);
+    const { animatedSeconds } = sequence;
+    const { beat, impact } = lionSequence(sequenceElapsed);
     if (phase !== sequence.phase) {
       phase = sequence.phase;
       phaseChanged(phase);
     }
     turn += (targetTurn - turn) * ease;
-    root.rotation.y = -0.28 + turn + px * 0.28 + Math.sin(elapsed * 0.4) * 0.12;
-    root.rotation.x = -0.04 + py * 0.12;
-    root.rotation.z = -0.08 + Math.sin(elapsed * 0.6) * 0.025;
-    root.position.y = 0.36 + Math.sin(elapsed * 0.8) * 0.035;
-    for (const part of parts)
-      part.mesh.position.copy(part.offset).multiplyScalar(sequence.expansion);
-    ribbons.rotation.z = Math.sin(elapsed * 0.18) * 0.08;
+    const awakened = animatedSeconds > 0;
+    root.rotation.y =
+      -0.28 + turn + (awakened ? px * 0.28 : 0) + Math.sin(animatedSeconds * 0.4) * 0.12;
+    root.rotation.x = -0.04 + (awakened ? py * 0.12 : 0);
+    root.rotation.z = -0.08 + Math.sin(animatedSeconds * 0.6) * 0.025;
+    root.position.y = 0.36 + Math.sin(animatedSeconds * 0.8) * 0.035;
+    root.scale.setScalar(0.76 * (1 + (beat?.kind === 'ball' ? impact * 0.06 : 0)));
+    parts.forEach((part, i) => {
+      const strike = beat?.index === i + 1 ? impact : 0;
+      part.mesh.position.copy(part.offset).multiplyScalar(sequence.expansion + strike * 0.22);
+      facets[i].emissive.set(0xffca62);
+      facets[i].emissiveIntensity = strike * 0.38 + (beat?.kind === 'ball' ? impact * 0.19 : 0);
+    });
+    ribbons.rotation.z = Math.sin(animatedSeconds * 0.18) * 0.08;
     renderer.render(scene, camera);
+    if (beat?.index) {
+      const angle = Math.PI / 2 - ((beat.index - 1) * Math.PI * 2) / 5;
+      target.set(Math.cos(angle) * 1.12, Math.sin(angle) * 1.12, 0.23);
+      parts[beat.index - 1].mesh.localToWorld(target);
+    } else {
+      root.getWorldPosition(target);
+    }
+    target.project(camera);
+    lionFrame({
+      seconds: sequenceElapsed,
+      beat,
+      impact,
+      target: { x: (target.x + 1) / 2, y: (1 - target.y) / 2 },
+    });
+    if (host.dataset.lionObject !== (beat?.kind ?? '')) host.dataset.lionObject = beat?.kind ?? '';
+    if (host.dataset.lionAction !== (beat?.phase ?? ''))
+      host.dataset.lionAction = beat?.phase ?? '';
+    host.dataset.lionTime = sequenceElapsed.toFixed(3);
     host.dataset.frame = String(++count);
     host.dataset.phase = phase;
     host.dataset.expansion = sequence.expansion.toFixed(3);

@@ -324,7 +324,7 @@ export function AdminProductMedia({
               ? 'L’ajout de photos est indisponible tant que Cloudinary n’est pas configuré. Vous pouvez enregistrer le produit sans le publier.'
               : 'La disponibilité des médias n’a pas pu être vérifiée. Vous pouvez enregistrer le produit et réessayer plus tard.'}
           </p>
-          <button className={styles.secondary} onClick={() => void loadConfig()} disabled={busy}>
+          <button className={`${styles.secondary} button-fill`} onClick={() => void loadConfig()} disabled={busy}>
             Vérifier à nouveau
           </button>
         </div>
@@ -356,7 +356,7 @@ export function AdminProductMedia({
         <div className={styles.notice}>
           <p>Un envoi reste à vérifier. Il ne sera pas affiché en boutique avant confirmation.</p>
           <div className={styles.actions}>
-            <button className={styles.secondary} disabled={busy} onClick={retryConfirm}>
+            <button className={`${styles.secondary} button-fill`} disabled={busy} onClick={retryConfirm}>
               Vérifier cet envoi
             </button>
             <button className={styles.danger} disabled={busy} onClick={discardUpload}>
@@ -403,7 +403,7 @@ export function AdminProductMedia({
                   defaultValue={item.alt}
                   disabled={busy}
                 />
-                <button type="submit" className={styles.secondary} disabled={busy}>
+                <button type="submit" className={`${styles.secondary} button-fill`} disabled={busy}>
                   Enregistrer la description
                 </button>
               </form>
@@ -446,7 +446,7 @@ export function AdminProductMedia({
           <button className={styles.danger} onClick={deleteMedia} disabled={busy}>
             {busy ? 'Suppression…' : 'Confirmer le retrait'}
           </button>
-          <button className={styles.secondary} onClick={() => setRemove(null)} disabled={busy}>
+          <button className={`${styles.secondary} button-fill`} onClick={() => setRemove(null)} disabled={busy}>
             Annuler
           </button>
         </div>

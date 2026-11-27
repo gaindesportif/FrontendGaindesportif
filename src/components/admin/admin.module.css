@@ -143,7 +143,7 @@
     color: #fff;
   }
   .secondary {
-    background: var(--paper);
+    background-color: var(--paper);
     border: 1px solid var(--line);
     color: var(--ink);
   }

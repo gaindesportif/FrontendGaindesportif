@@ -288,12 +288,12 @@ export function ArticleEditor({
           {error}
         </p>
         <button
-          className={styles.secondary}
+          className={`${styles.secondary} button-fill`}
           onClick={() => (setLoading(true), setError(''), setReload((v) => v + 1))}
         >
           Réessayer
         </button>
-        <Link className={styles.secondary} href="/administration/media">
+        <Link className={`${styles.secondary} button-fill`} href="/administration/media">
           Tous les articles
         </Link>
       </div>
@@ -314,7 +314,7 @@ export function ArticleEditor({
           </p>
         </div>
         <div className={styles.actions}>
-          <button type="button" className={styles.secondary} onClick={() => setPreview((v) => !v)}>
+          <button type="button" className={`${styles.secondary} button-fill`} onClick={() => setPreview((v) => !v)}>
             {preview ? <FileText size={16} /> : <Eye size={16} />} {preview ? 'Écrire' : 'Aperçu'}
           </button>
           <button
@@ -408,12 +408,12 @@ export function ArticleEditor({
                   <div className={styles.actions}>
                     <button
                       type="button"
-                      className={styles.secondary}
+                      className={`${styles.secondary} button-fill`}
                       onClick={() => insert('## ')}
                     >
                       Intertitre
                     </button>
-                    <button type="button" className={styles.secondary} onClick={() => insert('> ')}>
+                    <button type="button" className={`${styles.secondary} button-fill`} onClick={() => insert('> ')}>
                       Citation
                     </button>
                   </div>
@@ -557,7 +557,7 @@ export function ArticleEditor({
                       </p>
                       <button
                         type="button"
-                        className={styles.secondary}
+                        className={`${styles.secondary} button-fill`}
                         onClick={clearPhotoSelection}
                       >
                         Annuler cette sélection
@@ -571,7 +571,7 @@ export function ArticleEditor({
                   )}
                   <button
                     type="button"
-                    className={styles.secondary}
+                    className={`${styles.secondary} button-fill`}
                     disabled={!file || images.length >= 10}
                     onClick={() => void upload()}
                   >
@@ -615,7 +615,7 @@ export function ArticleEditor({
                       ))}
                       <button
                         type="button"
-                        className={styles.secondary}
+                        className={`${styles.secondary} button-fill`}
                         disabled={!imageFields[image.id]}
                         onClick={() => void imageAction(image)}
                       >
@@ -623,7 +623,7 @@ export function ArticleEditor({
                       </button>
                       <button
                         type="button"
-                        className={styles.secondary}
+                        className={`${styles.secondary} button-fill`}
                         disabled={article?.status === 'published' && images.length === 1}
                         onClick={() => void imageAction(image, true)}
                       >
@@ -641,14 +641,14 @@ export function ArticleEditor({
       {pending && (
         <div className={styles.notice}>
           <p>Photo envoyée. Sa vérification doit être confirmée avant de continuer.</p>
-          <button className={styles.secondary} disabled={!!busy} onClick={() => void upload()}>
+          <button className={`${styles.secondary} button-fill`} disabled={!!busy} onClick={() => void upload()}>
             Réessayer la vérification
           </button>
         </div>
       )}
       {article && (
         <div className={styles.footerActions}>
-          <button className={styles.secondary} disabled={!!busy} onClick={() => setRemove(true)}>
+          <button className={`${styles.secondary} button-fill`} disabled={!!busy} onClick={() => setRemove(true)}>
             <Trash2 size={15} />
             Supprimer l’article
           </button>
@@ -663,7 +663,7 @@ export function ArticleEditor({
       >
         <p>L’article sera retiré et ses photos supprimées. Cette action est définitive.</p>
         <div className={styles.actions}>
-          <button className={styles.secondary} disabled={!!busy} onClick={() => setRemove(false)}>
+          <button className={`${styles.secondary} button-fill`} disabled={!!busy} onClick={() => setRemove(false)}>
             Conserver l’article
           </button>
           <button

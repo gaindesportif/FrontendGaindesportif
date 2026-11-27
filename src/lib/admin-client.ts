@@ -26,6 +26,8 @@ export type AdminProduct = {
   stockQuantity: number | null;
   sizes: string[];
   colors: string[];
+  previewColor?: string | null;
+  flockingPriceXof?: number | null;
   availability: 'available' | 'on_request' | 'unavailable';
   status: 'draft' | 'published' | 'deleting';
   media: ProductMedia[];

@@ -305,6 +305,151 @@
     padding-top: 24px;
     border-top: 1px solid var(--line);
   }
+  .flocking {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    padding: 12px 0 0;
+  }
+  .flocking legend {
+    font-weight: 600;
+  }
+  .flocking p {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .flockingChoices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+  }
+  .flockingChoices label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    cursor: pointer;
+  }
+  .flockingFields {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 12px;
+  }
+  .flocking .field input {
+    font-size: 16px;
+  }
+  .preview {
+    display: grid;
+    gap: 12px;
+  }
+  .previewStudio {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 50% 41%, #f8f5ee 8%, transparent 69%),
+      linear-gradient(156deg, #eaede7, #ced8ce 96%);
+    border: 1px solid #ced6ca;
+    border-radius: 8px;
+  }
+  .previewStudio::before {
+    position: absolute;
+    inset: auto 23% 8% 23%;
+    height: 10%;
+    pointer-events: none;
+    background: radial-gradient(ellipse, #40544730, #40544710 46%, transparent 74%);
+    content: '';
+  }
+  .previewStudio canvas {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    touch-action: pan-y pinch-zoom;
+  }
+  .previewStudio canvas[data-ready='true'] {
+    cursor: grab;
+  }
+  .previewStudio canvas[data-ready='true']:active {
+    cursor: grabbing;
+  }
+  .flatFlocking {
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 4px;
+    width: min(100%, 275px);
+    aspect-ratio: 1 / 1.1;
+    padding-top: 2rem;
+    margin: 0 auto;
+    text-align: center;
+    clip-path: polygon(
+      34% 3%,
+      43% 8%,
+      57% 8%,
+      66% 3%,
+      91% 14%,
+      100% 31%,
+      81% 40%,
+      76% 32%,
+      76% 100%,
+      24% 100%,
+      24% 32%,
+      19% 40%,
+      0% 31%,
+      9% 14%
+    );
+  }
+  .flatFlocking span {
+    max-width: 50%;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+  .flatFlocking strong {
+    font-size: clamp(2.25rem, 9vw, 4.5rem);
+    line-height: 1;
+  }
+  .previewControls {
+    display: grid;
+    gap: 3px;
+  }
+  .previewControls label {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .previewAngle {
+    font-variant-numeric: tabular-nums;
+  }
+  .previewControls input {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 44px;
+    accent-color: #1c624c;
+  }
+  .previewActions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 10px;
+  }
+  .previewActions small {
+    color: #3b5148;
+    font-size: 12px;
+  }
+  .previewActions button {
+    gap: 7px;
+    min-height: 44px;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .previewActions button {
+      display: none;
+    }
+  }
   .quantity {
     display: grid;
     gap: 8px;

@@ -140,7 +140,7 @@
     min-height: 44px;
     border: 1px solid #b9c5b9;
     border-radius: 4px;
-    background: transparent;
+    background-color: transparent;
     color: var(--ink);
     font: inherit;
     font-size: 0.88rem;
@@ -159,7 +159,7 @@
   }
   .filter:hover,
   .secondary:hover {
-    background: #e8ecdf;
+    background-color: transparent;
   }
   .button:disabled,
   .secondary:disabled {
@@ -169,6 +169,17 @@
   .root :is(a, button, input, textarea, select):focus-visible {
     outline: 3px solid #98751b;
     outline-offset: 4px;
+  }
+  .subscribe {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 9px;
+    margin-top: 12px;
+  }
+  .subscribe p {
+    flex-basis: 100%;
+    margin: 0;
   }
   .grid {
     display: grid;

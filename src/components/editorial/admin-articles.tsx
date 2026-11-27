@@ -59,7 +59,7 @@ export function AdminArticles() {
         ].map(([v, label]) => (
           <button
             key={v}
-            className={styles.filter}
+            className={`${styles.filter} button-fill`}
             aria-pressed={status === v}
             onClick={() => {
               setLoading(true);
@@ -93,13 +93,13 @@ export function AdminArticles() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
-        <button className={styles.secondary}>Rechercher</button>
+        <button className={`${styles.secondary} button-fill`}>Rechercher</button>
       </form>
       {error ? (
         <div className={`${styles.notice} ${styles.error}`} role="alert">
           <p>{error}</p>
           <button
-            className={styles.secondary}
+            className={`${styles.secondary} button-fill`}
             onClick={() => (setLoading(true), setError(''), setReload((v) => v + 1))}
           >
             Réessayer
@@ -139,7 +139,7 @@ export function AdminArticles() {
                     </Link>
                     <p className={styles.hint}>Modifié le {articleDate(a.updatedAt)}</p>
                   </div>
-                  <Link className={styles.secondary} href={`/administration/media/${a.id}`}>
+                  <Link className={`${styles.secondary} button-fill`} href={`/administration/media/${a.id}`}>
                     Ouvrir <ArrowUpRight size={15} />
                   </Link>
                 </article>
@@ -149,7 +149,7 @@ export function AdminArticles() {
           {data.total > 12 && (
             <nav className={styles.pagination} aria-label="Pages des articles">
               <button
-                className={styles.secondary}
+                className={`${styles.secondary} button-fill`}
                 disabled={page === 1}
                 onClick={() => (setLoading(true), setError(''), setPage((v) => v - 1))}
               >
@@ -159,7 +159,7 @@ export function AdminArticles() {
                 Page {page} sur {Math.ceil(data.total / 12)}
               </span>
               <button
-                className={styles.secondary}
+                className={`${styles.secondary} button-fill`}
                 disabled={page * 12 >= data.total}
                 onClick={() => (setLoading(true), setError(''), setPage((v) => v + 1))}
               >

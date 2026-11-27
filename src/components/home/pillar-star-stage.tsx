@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PillarStarPalette, PillarStarScene } from '@/lib/pillar-star-scene';
 import styles from './cinematic-hero.module.css';
-import type { StarPhase } from '@/lib/pillar-star-sequence';
+import { PillarStarLion, preloadLionAssets } from './pillar-star-lion';
+import type { LionFrame, StarPhase } from '@/lib/pillar-star-sequence';
 
 export function PillarStarStage({
   playing,
@@ -21,6 +22,7 @@ export function PillarStarStage({
 }) {
   const host = useRef<HTMLDivElement>(null),
     api = useRef<PillarStarScene | null>(null);
+  const lionFrameRef = useRef<((frame: LionFrame) => void) | null>(null);
   const [ready, setReady] = useState(false);
   useEffect(() => {
     if (!reduced) return;
@@ -58,7 +60,13 @@ export function PillarStarStage({
         started = true;
         observer.disconnect();
         try {
+          const illustrations = preloadLionAssets();
           const { createPillarStarScene } = await import('@/lib/pillar-star-scene');
+          // Charge les sprites en parallèle. L’étoile reste disponible même en cas de réseau lent.
+          await Promise.race([
+            illustrations,
+            new Promise((resolve) => window.setTimeout(resolve, 850)),
+          ]);
           if (cancelled) return;
           api.current = createPillarStarScene(
             element,
@@ -69,6 +77,7 @@ export function PillarStarStage({
               }
             },
             onPhase,
+            (frame) => lionFrameRef.current?.(frame),
           );
           api.current.palette(settings.current.palette);
           api.current.hold(settings.current.holding);
@@ -112,6 +121,7 @@ export function PillarStarStage({
       <div className={styles.orbitOne} aria-hidden="true" />
       <div className={styles.orbitTwo} aria-hidden="true" />
       <div ref={host} className={styles.canvas} aria-hidden="true" />
+      {showing3D && <PillarStarLion frameRef={lionFrameRef} paused={!active || holding} />}
       <svg
         className={styles.starFallback}
         data-ready={showing3D}

@@ -90,7 +90,7 @@ export function AdminSession({ children }: { children: ReactNode }) {
               <span>
                 {user.displayName} · {user.role === 'owner' ? 'Propriétaire' : 'Administrateur'}
               </span>
-              <button className={styles.secondary} onClick={logout} disabled={loggingOut}>
+              <button className={`${styles.secondary} button-fill`} onClick={logout} disabled={loggingOut}>
                 {loggingOut ? 'Déconnexion…' : 'Se déconnecter'}
               </button>
             </div>
@@ -149,7 +149,7 @@ export function AdminSession({ children }: { children: ReactNode }) {
                 Se connecter
               </Link>
               {error && (
-                <button className={styles.secondary} onClick={() => void refresh()}>
+                <button className={`${styles.secondary} button-fill`} onClick={() => void refresh()}>
                   Réessayer
                 </button>
               )}

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { contactDetails } from '@/lib/contact';
+import { validFlockingName, validFlockingNumber, type Flocking } from './jersey-flocking';
 
 export const catalogueCategories = [
   { value: 'maillots', label: 'Maillots' },
@@ -58,6 +59,8 @@ export const publicProductSchema = z.object({
   priceXof: z.number().int().positive(),
   sizes: z.array(z.string().min(1).max(60)).max(30),
   colors: z.array(z.string().min(1).max(60)).max(30),
+  previewColor: z.string().min(1).max(40).nullish(),
+  flockingPriceXof: z.number().int().positive().nullish(),
   availability: z.enum(['on_request', 'available', 'unavailable']),
   status: z.literal('published'),
   media: z
@@ -90,16 +93,21 @@ export function formatXof(value: number) {
 
 export function productWhatsappUrl(
   product: PublicProduct,
-  selection: { quantity: number; size: string; color: string },
+  selection: { quantity: number; size: string; color: string; flocking?: Flocking | null },
   origin: string,
 ) {
+  const flocking = product.category === 'maillots' ? selection.flocking : undefined;
+  const supplement = flocking ? product.flockingPriceXof : 0;
+  const unitPrice = product.priceXof + (supplement ?? 0);
   if (
     product.availability === 'unavailable' ||
     !Number.isInteger(selection.quantity) ||
     selection.quantity < 1 ||
     selection.quantity > Math.min(99, product.stockQuantity) ||
     (product.sizes.length > 0 && !product.sizes.includes(selection.size)) ||
-    (product.colors.length > 0 && !product.colors.includes(selection.color))
+    (product.colors.length > 0 && !product.colors.includes(selection.color)) ||
+    (flocking &&
+      (!supplement || !validFlockingName(flocking.name) || !validFlockingNumber(flocking.number)))
   )
     return null;
   const productUrl = new URL(`/boutique/${encodeURIComponent(product.slug)}`, origin);
@@ -107,11 +115,21 @@ export function productWhatsappUrl(
     'Bonjour Gainde Sportif, je souhaite commander ce produit :',
     `Produit : ${product.name}`,
     `Référence : ${product.id}`,
-    `Prix unitaire affiché : ${formatXof(product.priceXof)}`,
+    `Prix unitaire affiché : ${formatXof(unitPrice)}`,
     `Quantité souhaitée : ${selection.quantity}`,
     ...(product.sizes.length ? [`Taille : ${selection.size}`] : []),
     ...(product.colors.length ? [`Couleur : ${selection.color}`] : []),
-    `Sous-total produits : ${formatXof(product.priceXof * selection.quantity)}`,
+    ...(flocking
+      ? [
+          'Flocage : Avec flocage',
+          `Supplément flocage par maillot : ${formatXof(supplement!)}`,
+          `Nom à floquer : ${flocking.name.trim()}`,
+          `Numéro à floquer : ${flocking.number}`,
+        ]
+      : flocking === null
+        ? ['Flocage : Sans flocage']
+        : []),
+    `Sous-total produits : ${formatXof(unitPrice * selection.quantity)}`,
     `Fiche produit : ${productUrl.href}`,
     `Photo du produit : ${product.media.find((media) => media.type === 'image')!.url}`,
     'Merci de confirmer la disponibilité, le règlement et la livraison ou le retrait.',
